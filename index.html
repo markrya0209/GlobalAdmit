@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>College Admissions Toolkit</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="./script.js"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <section id="auth-shell" class="auth-shell card">
+        <div class="auth-shell-top">
+          <div>
+            <h2>Welcome to GlobalAdmit</h2>
+            <p id="auth-status" class="helper-text auth-status">Checking session...</p>
+          </div>
+        </div>
+
+    <form id="auth-form" class="auth-form">
+      <label class="field">
+        <span>Email</span>
+        <input id="auth-email" type="email" placeholder="you@example.com" autocomplete="email" required />
+      </label>
+
+      <label class="field">
+        <span>Password</span>
+        <input
+          id="auth-password"
+          type="password"
+          placeholder="At least 6 characters"
+          autocomplete="current-password"
+          minlength="6"
+          required
+        />
+      </label>
+
+      <div class="auth-actions">
+        <button id="auth-signin-button" type="submit">Sign in</button>
+        <button id="auth-signup-button" type="button" class="secondary-button">
+          Create account
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <div id="app-content">
+      <header class="hero app-header">
+        <div>
+          <p class="eyebrow">US College Admissions</p>
+          <h1>Admissions Toolkit</h1>
+          <p class="subtitle">
+            Score your profile, classify universities, and organize an early and regular application plan.
+          </p>
+        </div>
+        <button id="app-signout-button" type="button" class="secondary-button" hidden>Sign out</button>
+      </header>
+
+      <nav class="top-nav" aria-label="Primary">
+        <button id="nav-scorer" class="nav-button nav-button-active" type="button">
+          Profile Scorer
+        </button>
+        <button id="nav-questionnaire" class="nav-button" type="button">
+          Preferences
+        </button>
+        <button id="nav-planner" class="nav-button" type="button">
+          Application Planner
+        </button>
+        <button id="nav-tasks" class="nav-button" type="button">
+          Task Manager
+        </button>
+      </nav>
+
+      <section id="page-scorer" class="page-view page-view-active">
+        <section class="card">
+          <div class="section-heading">
+            <span class="section-number">1</span>
+            <h2>Your profile</h2>
+          </div>
+
+          <div class="profile-stack">
+            <div class="subsection">
+              <div class="subsection-header">
+                <h3>IGCSE subjects</h3>
+                <button id="add-subject-button" type="button" class="secondary-button">
+                  Add subject
+                </button>
+              </div>
+
+              <div id="igcse-subjects" class="subjects-list"></div>
+              <p class="helper-text">
+                Add as many subjects as you like. Grades use the A* to G scale.
+              </p>
+            </div>
+
+            <div class="form-grid">
+              <label class="field">
+                <span>Overall IB grade (1-45)</span>
+                <input
+                  id="ib-score"
+                  type="number"
+                  min="1"
+                  max="45"
+                  step="1"
+                  placeholder="e.g. 39"
+                />
+              </label>
+
+              <label class="field">
+                <span>Course rigor (0-10)</span>
+                <input
+                  id="course-rigor"
+                  type="number"
+                  min="0"
+                  max="10"
+                  step="1"
+                  placeholder="e.g. 8"
+                />
+              </label>
+
+              <label class="field">
+                <span>SAT score (400-1600)</span>
+                <input
+                  id="sat-score"
+                  type="number"
+                  min="400"
+                  max="1600"
+                  step="10"
+                  placeholder="e.g. 1450"
+                />
+              </label>
+            </div>
+
+            <div class="subsection">
+              <div class="subsection-header">
+                <h3>Extracurricular activities</h3>
+              </div>
+
+              <div id="extracurricular-activities" class="activities-list"></div>
+              <p class="helper-text">
+                Enter up to 10 activities. Each impact score contributes to your extracurricular score.
+              </p>
+            </div>
+          </div>
+
+          <div class="profile-actions">
+            <button id="calculate-button" type="button">Calculate score</button>
+            <div class="score-display">
+              <span class="score-label">ProfileScore</span>
+              <strong id="profile-score-value">Not calculated yet</strong>
+            </div>
+          </div>
+
+          <p id="profile-message" class="helper-text">
+            Enter your subjects and scores to derive your academic score automatically.
+          </p>
+
+          <div id="score-breakdown" class="breakdown-panel" hidden></div>
+        </section>
+      </section>
+
+      <section id="page-planner" class="page-view">
+        <section class="card">
+          <div class="section-heading">
+            <span class="section-number">A</span>
+            <h2>Application Planner</h2>
+          </div>
+
+          <p class="helper-text planner-intro">
+            Build one Early Decision option, any number of eligible Early Action choices, and as many Regular Decision schools as you want.
+          </p>
+
+          <div class="planner-grid">
+            <section class="subsection">
+              <div class="subsection-header">
+                <h3 class="heading-ed">Early Decision</h3>
+              </div>
+              <div id="planner-ed-list" class="planner-list"></div>
+              <p class="helper-text">
+                Only one binding Early Decision school can be selected at a time.
+              </p>
+            </section>
+
+            <section class="subsection">
+              <div class="subsection-header">
+                <h3 class="heading-ea">Early Action</h3>
+              </div>
+              <div id="planner-ea-list" class="planner-list"></div>
+              <p class="helper-text">
+                Schools with REA or SCEA are excluded from this list.
+              </p>
+            </section>
+          </div>
+
+          <section class="subsection planner-rd">
+            <div class="subsection-header">
+              <h3>Regular Decision</h3>
+            </div>
+            <div id="planner-rd-list" class="planner-list planner-list-wide"></div>
+          </section>
+
+          <div class="section-actions">
+            <button id="save-applications-button" type="button">Save Applications</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-heading">
+            <span class="section-number">B</span>
+            <h2>Your plan</h2>
+          </div>
+
+          <div id="planner-summary" class="results-empty">
+            Start selecting schools to build your application plan.
+          </div>
+        </section>
+      </section>
+
+      <section id="page-questionnaire" class="page-view">
+        <section class="card">
+          <div class="section-heading">
+            <span class="section-number">Q</span>
+            <h2>University Preferences</h2>
+          </div>
+
+          <p class="helper-text planner-intro">
+            Answer these questions so the app can later make more accurate university recommendations.
+          </p>
+
+          <div class="questionnaire-grid">
+            <label class="field">
+              <span>Financial aid need</span>
+              <select id="pref-financial-aid">
+                <option value="">Select one</option>
+                <option value="Needs full financial aid">Needs full financial aid</option>
+                <option value="Needs some financial aid">Needs some financial aid</option>
+                <option value="Needs no financial aid">Needs no financial aid</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Climate preference</span>
+              <select id="pref-climate">
+                <option value="">Select one</option>
+                <option value="no_preference">No Preference</option>
+                <option value="1">Cold / Snowy</option>
+                <option value="2">Mild / Mixed</option>
+                <option value="3">Warm year-round</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Campus vibe preference</span>
+              <select id="pref-campus-vibe">
+                <option value="">Select one</option>
+                <option value="no_preference">No Preference</option>
+                <option value="1">Highly Competitive and Intense</option>
+                <option value="2">Balanced</option>
+                <option value="3">Collaborative and relaxed</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Social scene preference</span>
+              <select id="pref-social-scene">
+                <option value="">Select one</option>
+                <option value="no_preference">No Preference</option>
+                <option value="1">Party-heavy</option>
+                <option value="2">Balanced</option>
+                <option value="3">Quiet / Academic-focused</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Class style preference</span>
+              <select id="pref-class-style">
+                <option value="">Select one</option>
+                <option value="no_preference">No Preference</option>
+                <option value="1">Lecture-based</option>
+                <option value="2">Discussion-based</option>
+                <option value="3">Project-based</option>
+              </select>
+            </label>
+
+            <section class="subsection">
+              <div class="subsection-header">
+                <h3>Campus type ranking</h3>
+              </div>
+              <p class="helper-text">Drag to reorder from most preferred to least preferred.</p>
+              <div id="campus-ranking" class="ranking-list" aria-label="Campus type ranking"></div>
+            </section>
+
+            <fieldset class="subsection option-group">
+              <legend>Class size preference</legend>
+              <label class="choice-row">
+                <input type="radio" name="class-size" value="Small (<5k)" />
+                <span>Small (&lt;5k)</span>
+              </label>
+              <label class="choice-row">
+                <input type="radio" name="class-size" value="Medium (5k-15k)" />
+                <span>Medium (5k-15k)</span>
+              </label>
+              <label class="choice-row">
+                <input type="radio" name="class-size" value="Large (>15k)" />
+                <span>Large (&gt;15k)</span>
+              </label>
+            </fieldset>
+          </div>
+          <div class="section-actions">
+            <button id="save-preferences-button" type="button">Save Preferences</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-heading">
+            <span class="section-number">R</span>
+            <h2>Preference Summary</h2>
+          </div>
+
+          <div id="questionnaire-summary" class="results-empty">
+            Fill out the questionnaire to capture the user's preferences.
+          </div>
+        </section>
+      </section>
+
+      <section id="page-tasks" class="page-view">
+        <section class="card">
+          <div class="section-heading">
+            <span class="section-number">T</span>
+            <h2>Application Task Planner</h2>
+          </div>
+
+          <p class="helper-text planner-intro">
+            Create and edit application tasks, estimate hours, and keep track of what is completed versus upcoming.
+          </p>
+
+          <form id="task-form" class="task-form">
+            <div class="form-grid">
+              <label class="field">
+                <span>Task title</span>
+                <input id="task-title" type="text" placeholder="e.g. Draft Common App essay" />
+              </label>
+
+              <label class="field">
+                <span>Type</span>
+                <select id="task-type">
+                  <option value="">Select a type</option>
+                  <option value="Standardized Test">Standardized Test</option>
+                  <option value="School Exam">School Exam</option>
+                  <option value="Extracurricular">Extracurricular</option>
+                  <option value="Essay">Essay</option>
+                  <option value="Financial Aid Logistics">Financial Aid Logistics</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Date</span>
+                <input id="task-date" type="date" />
+              </label>
+
+              <label class="field">
+                <span>Priority score (1-10)</span>
+                <input id="task-priority" type="number" min="1" max="10" step="1" placeholder="e.g. 8" />
+              </label>
+
+              <label class="field">
+                <span>Hours required</span>
+                <input id="task-hours" type="number" min="0" step="0.5" placeholder="e.g. 4" />
+              </label>
+
+              <label class="field checkbox-field">
+                <span>Completed</span>
+                <input id="task-completed" type="checkbox" />
+              </label>
+            </div>
+
+            <div class="selection-toolbar">
+              <button id="task-save-button" type="submit">Add task</button>
+              <button id="task-cancel-button" type="button" class="secondary-button" hidden>
+                Cancel edit
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="card">
+          <div class="section-heading">
+            <span class="section-number">L</span>
+            <h2>Tasks</h2>
+          </div>
+
+          <div class="task-filter-bar" role="tablist" aria-label="Task views">
+            <button id="task-filter-upcoming" class="filter-button filter-button-active" type="button">
+              Upcoming
+            </button>
+            <button id="task-filter-overdue" class="filter-button" type="button">
+              Overdue
+            </button>
+            <button id="task-filter-completed" class="filter-button" type="button">
+              Completed
+            </button>
+            <button id="task-filter-all" class="filter-button" type="button">
+              All
+            </button>
+          </div>
+
+          <div class="task-sort-bar">
+            <label class="field task-sort-field">
+              <span>Sort tasks by</span>
+              <select id="task-sort-field">
+                <option value="date">Date</option>
+                <option value="priority">Priority score</option>
+                <option value="hours">Hours required</option>
+              </select>
+            </label>
+
+            <label class="field task-sort-field">
+              <span>Order</span>
+              <select id="task-sort-direction">
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+              </select>
+            </label>
+          </div>
+
+          <div id="task-list" class="task-list results-empty">
+            Add your first task to get started.
+          </div>
+        </section>
+      </section>
+          </div>
+    </main>
+
+  </body>
+</html>
