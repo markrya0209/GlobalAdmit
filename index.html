@@ -66,6 +66,9 @@
         <button id="nav-planner" class="nav-button" type="button">
           Application Planner
         </button>
+        <button id="nav-statuses" class="nav-button" type="button">
+          Application Statuses
+        </button>
         <button id="nav-tasks" class="nav-button" type="button">
           Task Manager
         </button>
@@ -81,7 +84,7 @@
           <div class="profile-stack">
             <div class="subsection">
               <div class="subsection-header">
-                <h3>IGCSE subjects</h3>
+                <h3>IGCSE / GCSE subjects</h3>
                 <button id="add-subject-button" type="button" class="secondary-button">
                   Add subject
                 </button>
@@ -93,42 +96,125 @@
               </p>
             </div>
 
-            <div class="form-grid">
-              <label class="field">
-                <span>Overall IB grade (1-45)</span>
-                <input
-                  id="ib-score"
-                  type="number"
-                  min="1"
-                  max="45"
-                  step="1"
-                  placeholder="e.g. 39"
-                />
+            <div class="subsection">
+              <div class="subsection-header">
+                <h3>Academic curriculum for Grades 11 and 12</h3>
+              </div>
+
+              <label class="field curriculum-field">
+                <span>Choose your curriculum</span>
+                <select id="curriculum-type">
+                  <option value="ib">IB</option>
+                  <option value="a_levels">A-Levels</option>
+                </select>
+              </label>
+            </div>
+
+            <div id="ib-section" class="subsection academic-section">
+              <div class="subsection-header">
+                <h3>IB subjects</h3>
+              </div>
+
+              <div id="ib-hl-subjects" class="subjects-list"></div>
+              <div id="ib-sl-subjects" class="subjects-list ib-subsection-gap"></div>
+
+              <div class="ib-core-grid">
+                <label class="field">
+                  <span>TOK grade</span>
+                  <select id="ib-tok-grade">
+                    <option value="">Select</option>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                    <option value="E">E</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>EE grade</span>
+                  <select id="ib-ee-grade">
+                    <option value="">Select</option>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                    <option value="E">E</option>
+                  </select>
+                </label>
+
+                <div class="score-display ib-score-display">
+                  <span class="score-label">IB Core / 3</span>
+                  <strong id="ib-core-score-value">Not calculated yet</strong>
+                </div>
+
+                <div class="score-display ib-score-display">
+                  <span class="score-label">IB Total / 45</span>
+                  <strong id="ib-total-score-value">Not calculated yet</strong>
+                </div>
+
+                <div class="score-display ib-score-display">
+                  <span class="score-label">Course Rigor / 10</span>
+                  <strong id="ib-course-rigor-value">Not calculated yet</strong>
+                </div>
+              </div>
+            </div>
+
+            <div id="a-levels-section" class="subsection academic-section" hidden>
+              <div class="subsection-header">
+                <h3>A-Level subjects</h3>
+              </div>
+
+              <div id="a-level-subjects" class="subjects-list"></div>
+
+              <div class="ib-core-grid a-level-score-grid">
+                <div class="score-display ib-score-display">
+                  <span class="score-label">A-Level GPA / 4.0</span>
+                  <strong id="a-level-gpa-value">Not calculated yet</strong>
+                </div>
+
+                <div class="score-display ib-score-display">
+                  <span class="score-label">Course Rigor / 10</span>
+                  <strong id="a-level-course-rigor-value">Not calculated yet</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-grid form-grid-double-academic">
+              <label class="field checkbox-field test-optional-field">
+                <span>Testing policy</span>
+                <label class="checkbox-inline">
+                  <input id="test-optional" type="checkbox" />
+                  <span>Applying test optional</span>
+                </label>
+                <span class="helper-text">If selected, SAT and ACT are disabled and your grades-based academic score is used twice.</span>
               </label>
 
-              <label class="field">
-                <span>Course rigor (0-10)</span>
-                <input
-                  id="course-rigor"
-                  type="number"
-                  min="0"
-                  max="10"
-                  step="1"
-                  placeholder="e.g. 8"
-                />
-              </label>
+              <div class="test-score-group">
+                <label class="field">
+                  <span>SAT score (400-1600)</span>
+                  <input
+                    id="sat-score"
+                    type="number"
+                    min="400"
+                    max="1600"
+                    step="10"
+                    placeholder="e.g. 1450"
+                  />
+                </label>
 
-              <label class="field">
-                <span>SAT score (400-1600)</span>
-                <input
-                  id="sat-score"
-                  type="number"
-                  min="400"
-                  max="1600"
-                  step="10"
-                  placeholder="e.g. 1450"
-                />
-              </label>
+                <label class="field">
+                  <span>ACT score (1-36)</span>
+                  <input
+                    id="act-score"
+                    type="number"
+                    min="1"
+                    max="36"
+                    step="1"
+                    placeholder="e.g. 33"
+                  />
+                </label>
+              </div>
             </div>
 
             <div class="subsection">
@@ -175,6 +261,26 @@
               <div class="subsection-header">
                 <h3 class="heading-ed">Early Decision</h3>
               </div>
+              <div class="planner-controls">
+                <label class="field planner-control-field">
+                  <span>Search universities</span>
+                  <input id="planner-ed-search" type="search" placeholder="Search Early Decision universities" />
+                </label>
+                <label class="field planner-control-field">
+                  <span>Sort by</span>
+                  <select id="planner-ed-sort-field">
+                    <option value="fit">Fit score</option>
+                    <option value="category">Difficulty category</option>
+                  </select>
+                </label>
+                <label class="field planner-control-field">
+                  <span>Order</span>
+                  <select id="planner-ed-sort-direction">
+                    <option value="desc">Descending</option>
+                    <option value="asc">Ascending</option>
+                  </select>
+                </label>
+              </div>
               <div id="planner-ed-list" class="planner-list"></div>
               <p class="helper-text">
                 Only one binding Early Decision school can be selected at a time.
@@ -184,6 +290,26 @@
             <section class="subsection">
               <div class="subsection-header">
                 <h3 class="heading-ea">Early Action</h3>
+              </div>
+              <div class="planner-controls">
+                <label class="field planner-control-field">
+                  <span>Search universities</span>
+                  <input id="planner-ea-search" type="search" placeholder="Search Early Action universities" />
+                </label>
+                <label class="field planner-control-field">
+                  <span>Sort by</span>
+                  <select id="planner-ea-sort-field">
+                    <option value="fit">Fit score</option>
+                    <option value="category">Difficulty category</option>
+                  </select>
+                </label>
+                <label class="field planner-control-field">
+                  <span>Order</span>
+                  <select id="planner-ea-sort-direction">
+                    <option value="desc">Descending</option>
+                    <option value="asc">Ascending</option>
+                  </select>
+                </label>
               </div>
               <div id="planner-ea-list" class="planner-list"></div>
               <p class="helper-text">
@@ -196,6 +322,26 @@
             <div class="subsection-header">
               <h3>Regular Decision</h3>
             </div>
+            <div class="planner-controls planner-controls-wide">
+              <label class="field planner-control-field planner-control-search-wide">
+                <span>Search universities</span>
+                <input id="planner-rd-search" type="search" placeholder="Search Regular Decision universities" />
+              </label>
+              <label class="field planner-control-field">
+                <span>Sort by</span>
+                <select id="planner-rd-sort-field">
+                  <option value="fit">Fit score</option>
+                  <option value="category">Difficulty category</option>
+                </select>
+              </label>
+              <label class="field planner-control-field">
+                <span>Order</span>
+                <select id="planner-rd-sort-direction">
+                  <option value="desc">Descending</option>
+                  <option value="asc">Ascending</option>
+                </select>
+              </label>
+            </div>
             <div id="planner-rd-list" class="planner-list planner-list-wide"></div>
           </section>
 
@@ -204,14 +350,34 @@
           </div>
         </section>
 
+      </section>
+
+      <section id="page-statuses" class="page-view">
         <section class="card">
           <div class="section-heading">
-            <span class="section-number">B</span>
-            <h2>Your plan</h2>
+            <span class="section-number">S</span>
+            <h2>Application Statuses</h2>
           </div>
 
-          <div id="planner-summary" class="results-empty">
-            Start selecting schools to build your application plan.
+          <p class="helper-text planner-intro">
+            Track the current outcome of each selected application. New selections default to Working on Application.
+          </p>
+
+          <div class="statuses-grid">
+            <section class="summary-block">
+              <h3 class="heading-ed">Early Decision</h3>
+              <div id="statuses-ed-list" class="status-list results-empty">No Early Decision applications selected.</div>
+            </section>
+
+            <section class="summary-block">
+              <h3 class="heading-ea">Early Action</h3>
+              <div id="statuses-ea-list" class="status-list results-empty">No Early Action applications selected.</div>
+            </section>
+
+            <section class="summary-block">
+              <h3 class="heading-rd">Regular Decision</h3>
+              <div id="statuses-rd-list" class="status-list results-empty">No Regular Decision applications selected.</div>
+            </section>
           </div>
         </section>
       </section>

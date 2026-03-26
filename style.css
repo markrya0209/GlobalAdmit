@@ -325,6 +325,48 @@ button:hover {
   align-items: end;
 }
 
+
+
+.academic-section[hidden] {
+  display: none;
+}
+
+.curriculum-field {
+  max-width: 320px;
+}
+
+.a-level-score-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.a-level-subject-row {
+  grid-template-columns: minmax(0, 1.8fr) minmax(120px, 0.9fr);
+}
+
+.ib-subsection-gap {
+  margin-top: 12px;
+}
+
+.ib-core-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.ib-score-display {
+  min-width: 0;
+  text-align: left;
+}
+
+.form-grid-single-academic {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ib-subject-row {
+  grid-template-columns: minmax(0, 1.8fr) minmax(120px, 0.9fr);
+}
+
 .activity-row {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(220px, 0.7fr);
@@ -582,6 +624,100 @@ button.task-remove-button {
   color: #922b2b;
 }
 
+.planner-controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.statuses-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.status-list {
+  display: grid;
+  gap: 12px;
+}
+
+.status-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.status-card h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.status-field {
+  min-width: 240px;
+}
+
+.status-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 190px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.status-working {
+  background: #e5e7eb;
+  color: #4b5563;
+}
+
+.status-applied {
+  background: #dff0ff;
+  color: #165c96;
+}
+
+.status-rejected {
+  background: #f8d7d7;
+  color: #922b2b;
+}
+
+.status-deferred {
+  background: #ffe0c7;
+  color: #9b4d08;
+}
+
+.status-waitlisted {
+  background: #fff0c9;
+  color: #8b6200;
+}
+
+.status-accepted {
+  background: #dff4d9;
+  color: #1b6d30;
+}
+
+.status-enrolled {
+  background: #b9e3ff;
+  color: #0c5a96;
+}
+
+.planner-controls-wide {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.planner-control-field {
+  min-width: 0;
+}
+
+.planner-control-search-wide {
+  grid-column: 1 / 2;
+}
+
 .search-field {
   margin-bottom: 16px;
 }
@@ -833,7 +969,11 @@ button.task-remove-button {
   .subject-row,
   .activity-row,
   .university-list,
-  .planner-list-wide {
+  .planner-list-wide,
+  .planner-controls,
+  .planner-controls-wide,
+  .ib-core-grid,
+  .a-level-score-grid {
     grid-template-columns: 1fr;
   }
 
@@ -843,7 +983,8 @@ button.task-remove-button {
 
   .profile-actions,
   .result-card,
-  .task-card-top {
+  .task-card-top,
+  .status-card {
     flex-direction: column;
     align-items: stretch;
   }
@@ -938,4 +1079,39 @@ body.signed-out .auth-shell {
   margin-top: 18px;
   display: flex;
   justify-content: flex-end;
+}
+
+
+.test-score-group {
+  display: grid;
+  gap: 1rem;
+}
+
+.checkbox-field {
+  align-content: start;
+}
+
+.checkbox-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.checkbox-inline input {
+  width: auto;
+}
+
+.planner-option-disabled {
+  opacity: 0.65;
+}
+
+.planner-restriction {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(160, 77, 43, 0.12);
+  color: #a04d2b;
+  font-size: 0.85rem;
+  font-weight: 700;
 }

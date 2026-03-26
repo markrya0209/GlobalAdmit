@@ -87,7 +87,8 @@ function normalizeUniversityRecord(record) {
     hasED: Boolean(record.has_ed),
     ea_deadline: formatDbDateForPlanner(record.ea_deadline),
     ed_deadline: formatDbDateForPlanner(record.ed_deadline),
-    rd_deadline: formatDbDateForPlanner(record.rd_deadline)
+    rd_deadline: formatDbDateForPlanner(record.rd_deadline),
+    allows_test_optional: record.test_optional !== false
   };
 }
 
@@ -108,10 +109,12 @@ async function loadUniversities() {
 
 const pageScorer = document.getElementById("page-scorer");
 const pagePlanner = document.getElementById("page-planner");
+const pageStatuses = document.getElementById("page-statuses");
 const pageQuestionnaire = document.getElementById("page-questionnaire");
 const pageTasks = document.getElementById("page-tasks");
 const navScorer = document.getElementById("nav-scorer");
 const navPlanner = document.getElementById("nav-planner");
+const navStatuses = document.getElementById("nav-statuses");
 const navQuestionnaire = document.getElementById("nav-questionnaire");
 const navTasks = document.getElementById("nav-tasks");
 const appContent = document.getElementById("app-content");
@@ -126,9 +129,22 @@ const appSignoutButton = document.getElementById("app-signout-button");
 const igcseSubjects = document.getElementById("igcse-subjects");
 const extracurricularActivities = document.getElementById("extracurricular-activities");
 const addSubjectButton = document.getElementById("add-subject-button");
-const ibScoreInput = document.getElementById("ib-score");
-const courseRigorInput = document.getElementById("course-rigor");
+const curriculumTypeInput = document.getElementById("curriculum-type");
+const ibSection = document.getElementById("ib-section");
+const aLevelsSection = document.getElementById("a-levels-section");
+const ibHlSubjects = document.getElementById("ib-hl-subjects");
+const ibSlSubjects = document.getElementById("ib-sl-subjects");
+const ibTokGradeInput = document.getElementById("ib-tok-grade");
+const ibEeGradeInput = document.getElementById("ib-ee-grade");
+const ibCoreScoreValue = document.getElementById("ib-core-score-value");
+const ibTotalScoreValue = document.getElementById("ib-total-score-value");
+const ibCourseRigorValue = document.getElementById("ib-course-rigor-value");
+const aLevelSubjects = document.getElementById("a-level-subjects");
+const aLevelGpaValue = document.getElementById("a-level-gpa-value");
+const aLevelCourseRigorValue = document.getElementById("a-level-course-rigor-value");
 const satScoreInput = document.getElementById("sat-score");
+const actScoreInput = document.getElementById("act-score");
+const testOptionalInput = document.getElementById("test-optional");
 const calculateButton = document.getElementById("calculate-button");
 const profileScoreValue = document.getElementById("profile-score-value");
 const profileMessage = document.getElementById("profile-message");
@@ -137,7 +153,18 @@ const scoreBreakdown = document.getElementById("score-breakdown");
 const plannerEdList = document.getElementById("planner-ed-list");
 const plannerEaList = document.getElementById("planner-ea-list");
 const plannerRdList = document.getElementById("planner-rd-list");
-const plannerSummary = document.getElementById("planner-summary");
+const plannerEdSearch = document.getElementById("planner-ed-search");
+const plannerEaSearch = document.getElementById("planner-ea-search");
+const plannerRdSearch = document.getElementById("planner-rd-search");
+const plannerEdSortField = document.getElementById("planner-ed-sort-field");
+const plannerEaSortField = document.getElementById("planner-ea-sort-field");
+const plannerRdSortField = document.getElementById("planner-rd-sort-field");
+const plannerEdSortDirection = document.getElementById("planner-ed-sort-direction");
+const plannerEaSortDirection = document.getElementById("planner-ea-sort-direction");
+const plannerRdSortDirection = document.getElementById("planner-rd-sort-direction");
+const statusesEdList = document.getElementById("statuses-ed-list");
+const statusesEaList = document.getElementById("statuses-ea-list");
+const statusesRdList = document.getElementById("statuses-rd-list");
 const saveApplicationsButton = document.getElementById("save-applications-button");
 const prefFinancialAid = document.getElementById("pref-financial-aid");
 const prefClimate = document.getElementById("pref-climate");
@@ -168,8 +195,14 @@ let currentProfileScore = null;
 let currentAcademicScore = null;
 let campusRankingOrder = ["Rural", "Urban", "Suburban"];
 let selectedPlannerEd = "";
+const plannerViewState = {
+  ed: { search: "", sortField: "fit", sortDirection: "desc" },
+  ea: { search: "", sortField: "fit", sortDirection: "desc" },
+  rd: { search: "", sortField: "fit", sortDirection: "desc" }
+};
 const selectedPlannerEa = new Set();
 const selectedPlannerRd = new Set();
+const applicationStatuses = {};
 const tasks = [];
 let taskFilter = "upcoming";
 let taskSortFieldValue = "date";
@@ -180,6 +213,16 @@ let isAuthBusy = false;
 let currentUser = null;
 let isHydratingData = false;
 let persistTimer = null;
+
+function isApplyingTestOptional() {
+  return Boolean(testOptionalInput?.checked);
+}
+
+function syncTestingInputs() {
+  const isTestOptional = isApplyingTestOptional();
+  satScoreInput.disabled = isTestOptional;
+  actScoreInput.disabled = isTestOptional;
+}
 
 function setAuthStatus(message, isError = false) {
   authStatus.textContent = message;
@@ -205,9 +248,14 @@ function setDefaultProfileInputs() {
     extracurricularActivities.appendChild(createActivityRow(i));
   }
 
-  ibScoreInput.value = "";
-  courseRigorInput.value = "";
+  curriculumTypeInput.value = "ib";
+  initializeIbInputs();
+  initializeALevelInputs();
+  updateAcademicTrackVisibility();
   satScoreInput.value = "";
+  actScoreInput.value = "";
+  testOptionalInput.checked = false;
+  syncTestingInputs();
 }
 
 function resetDerivedState() {
@@ -217,6 +265,8 @@ function resetDerivedState() {
   profileMessage.textContent = "Enter your subjects and scores to derive your academic score automatically.";
   scoreBreakdown.hidden = true;
   scoreBreakdown.innerHTML = "";
+  renderIbComputedValues();
+  renderALevelComputedValues();
 }
 
 function resetAppState() {
@@ -269,6 +319,334 @@ function getSelectedSubjectNames() {
   return getSelectedSubjects().map((subject) => subject.name);
 }
 
+const ibSubjectOptions = [
+  "Mathematics: Analysis and Approaches",
+  "Mathematics: Applications and Interpretation",
+  "Physics",
+  "Chemistry",
+  "Biology",
+  "Computer Science",
+  "Economics",
+  "Business Management",
+  "English A Language and Literature",
+  "English A Literature",
+  "History",
+  "Geography",
+  "Psychology",
+  "Visual Arts",
+  "Language B",
+  "Language ab initio",
+  "Global Politics",
+  "ESS",
+  "Theatre",
+  "Music"
+];
+
+function createIbSubjectRow(level, index, subjectName = "", score = "") {
+  const row = document.createElement("div");
+  row.className = "subject-row ib-subject-row";
+  row.innerHTML = `
+    <label class="field">
+      <span>${level} Subject ${index + 1}</span>
+      <select class="ib-subject-name">
+        <option value="">Select subject</option>
+        ${ibSubjectOptions.map((subject) => `<option value="${subject}">${subject}</option>`).join("")}
+      </select>
+    </label>
+    <label class="field">
+      <span>Score</span>
+      <select class="ib-subject-score">
+        <option value="">Select</option>
+        <option value="7">7</option>
+        <option value="6">6</option>
+        <option value="5">5</option>
+        <option value="4">4</option>
+        <option value="3">3</option>
+        <option value="2">2</option>
+        <option value="1">1</option>
+      </select>
+    </label>
+  `;
+  row.querySelector(".ib-subject-name").value = subjectName;
+  row.querySelector(".ib-subject-score").value = score ? String(score) : "";
+  return row;
+}
+
+function updateIbSubjectAvailability() {
+  const subjectSelects = Array.from(document.querySelectorAll(".ib-subject-name"));
+  const selectedSubjects = new Set(
+    subjectSelects
+      .map((select) => select.value)
+      .filter(Boolean)
+  );
+
+  subjectSelects.forEach((select) => {
+    const currentValue = select.value;
+    Array.from(select.options).forEach((option) => {
+      if (!option.value) {
+        option.disabled = false;
+        return;
+      }
+
+      option.disabled = option.value !== currentValue && selectedSubjects.has(option.value);
+    });
+  });
+}
+
+function initializeIbInputs() {
+  ibHlSubjects.innerHTML = "";
+  ibSlSubjects.innerHTML = "";
+
+  for (let i = 0; i < 3; i += 1) {
+    ibHlSubjects.appendChild(createIbSubjectRow("HL", i));
+    ibSlSubjects.appendChild(createIbSubjectRow("SL", i));
+  }
+
+  ibTokGradeInput.value = "";
+  ibEeGradeInput.value = "";
+  updateIbSubjectAvailability();
+  renderIbComputedValues();
+}
+
+function getIbSubjectEntries(container) {
+  return Array.from(container.querySelectorAll(".ib-subject-row")).map((row) => ({
+    name: row.querySelector(".ib-subject-name").value,
+    score: row.querySelector(".ib-subject-score").value
+  }));
+}
+
+function getIbCorePoints(tokGrade, eeGrade) {
+  if (!tokGrade || !eeGrade) {
+    return null;
+  }
+
+  const matrix = {
+    "A:A": 3,
+    "A:B": 3,
+    "A:C": 2,
+    "A:D": 2,
+    "A:E": 0,
+    "B:A": 3,
+    "B:B": 2,
+    "B:C": 2,
+    "B:D": 1,
+    "B:E": 0,
+    "C:A": 2,
+    "C:B": 2,
+    "C:C": 1,
+    "C:D": 0,
+    "C:E": 0,
+    "D:A": 2,
+    "D:B": 1,
+    "D:C": 0,
+    "D:D": 0,
+    "D:E": 0,
+    "E:A": 0,
+    "E:B": 0,
+    "E:C": 0,
+    "E:D": 0,
+    "E:E": 0
+  };
+
+  return matrix[`${tokGrade}:${eeGrade}`] ?? 0;
+}
+
+function getIbRigorContribution(subjectName) {
+  if (subjectName === "Mathematics: Analysis and Approaches") return 4;
+  if (subjectName === "Physics") return 3;
+  if (subjectName === "Chemistry") return 3;
+  if (subjectName === "Computer Science") return 3;
+  if (subjectName === "Biology") return 2;
+  if (subjectName === "Mathematics: Applications and Interpretation") return 2;
+  return 1;
+}
+
+function getIbDetails() {
+  const hlSubjects = getIbSubjectEntries(ibHlSubjects);
+  const slSubjects = getIbSubjectEntries(ibSlSubjects);
+  const tokGrade = ibTokGradeInput.value;
+  const eeGrade = ibEeGradeInput.value;
+
+  const allSubjects = [...hlSubjects, ...slSubjects];
+  const hasMissing = allSubjects.some((subject) => !subject.name || !subject.score);
+  if (hasMissing || !tokGrade || !eeGrade) {
+    return { error: "Please complete all 3 HL subjects, 3 SL subjects, TOK, and EE." };
+  }
+
+  const subjectTotal = allSubjects.reduce((sum, subject) => sum + Number.parseInt(subject.score, 10), 0);
+  const corePoints = getIbCorePoints(tokGrade, eeGrade);
+  const ibTotal = subjectTotal + corePoints;
+  const rigorRaw = hlSubjects.reduce((sum, subject) => sum + getIbRigorContribution(subject.name), 0);
+  const courseRigor = Math.max(0, Math.min(10, rigorRaw));
+
+  return {
+    hlSubjects,
+    slSubjects,
+    tokGrade,
+    eeGrade,
+    corePoints,
+    ibTotal,
+    courseRigor
+  };
+}
+
+function renderIbComputedValues() {
+  const ibDetails = getIbDetails();
+  if (ibDetails.error) {
+    ibCoreScoreValue.textContent = "Not calculated yet";
+    ibTotalScoreValue.textContent = "Not calculated yet";
+    ibCourseRigorValue.textContent = "Not calculated yet";
+    return;
+  }
+
+  ibCoreScoreValue.textContent = String(ibDetails.corePoints);
+  ibTotalScoreValue.textContent = String(ibDetails.ibTotal);
+  ibCourseRigorValue.textContent = String(ibDetails.courseRigor);
+}
+
+const aLevelSubjectOptions = [
+  "A-Level Maths",
+  "Physics",
+  "Chemistry",
+  "Biology",
+  "Computer Science",
+  "Economics",
+  "Further Mathematics",
+  "English Literature",
+  "English Language",
+  "History",
+  "Geography",
+  "Psychology",
+  "Business",
+  "Politics",
+  "Sociology",
+  "Art and Design",
+  "French",
+  "Spanish",
+  "German",
+  "Music"
+];
+
+const aLevelGradePoints = {
+  "A*": 4.0,
+  A: 3.8,
+  B: 3.0,
+  C: 2.0,
+  D: 1.0,
+  E: 0.0,
+  F: 0.0,
+  G: 0.0
+};
+
+function createALevelSubjectRow(index, subjectName = "", grade = "") {
+  const row = document.createElement("div");
+  row.className = "subject-row a-level-subject-row";
+  row.innerHTML = `
+    <label class="field">
+      <span>A-Level Subject ${index + 1}</span>
+      <select class="a-level-subject-name">
+        <option value="">Select subject</option>
+        ${aLevelSubjectOptions.map((subject) => `<option value="${subject}">${subject}</option>`).join("")}
+      </select>
+    </label>
+    <label class="field">
+      <span>Grade</span>
+      <select class="a-level-subject-grade">
+        <option value="">Select</option>
+        <option value="A*">A*</option>
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+        <option value="D">D</option>
+        <option value="E">E</option>
+        <option value="F">F</option>
+        <option value="G">G</option>
+      </select>
+    </label>
+  `;
+  row.querySelector(".a-level-subject-name").value = subjectName;
+  row.querySelector(".a-level-subject-grade").value = grade;
+  return row;
+}
+
+function updateALevelSubjectAvailability() {
+  const subjectSelects = Array.from(document.querySelectorAll(".a-level-subject-name"));
+  const selectedSubjects = new Set(subjectSelects.map((select) => select.value).filter(Boolean));
+
+  subjectSelects.forEach((select) => {
+    const currentValue = select.value;
+    Array.from(select.options).forEach((option) => {
+      if (!option.value) {
+        option.disabled = false;
+        return;
+      }
+
+      option.disabled = option.value !== currentValue && selectedSubjects.has(option.value);
+    });
+  });
+}
+
+function initializeALevelInputs() {
+  aLevelSubjects.innerHTML = "";
+  for (let i = 0; i < 3; i += 1) {
+    aLevelSubjects.appendChild(createALevelSubjectRow(i));
+  }
+  updateALevelSubjectAvailability();
+  renderALevelComputedValues();
+}
+
+function getALevelSubjectEntries() {
+  return Array.from(aLevelSubjects.querySelectorAll(".a-level-subject-row")).map((row) => ({
+    name: row.querySelector(".a-level-subject-name").value,
+    grade: row.querySelector(".a-level-subject-grade").value
+  }));
+}
+
+function getALevelRigorContribution(subjectName) {
+  if (subjectName === "A-Level Maths") return 4;
+  if (subjectName === "Physics") return 3;
+  if (subjectName === "Chemistry") return 3;
+  if (subjectName === "Computer Science") return 3;
+  if (subjectName === "Biology") return 2;
+  return 1;
+}
+
+function getALevelDetails() {
+  const subjects = getALevelSubjectEntries();
+  const hasMissing = subjects.some((subject) => !subject.name || !subject.grade);
+  if (hasMissing) {
+    return { error: "Please complete all 3 A-Level subjects and grades." };
+  }
+
+  const gpa = subjects.reduce((sum, subject) => sum + aLevelGradePoints[subject.grade], 0) / subjects.length;
+  const rigorRaw = subjects.reduce((sum, subject) => sum + getALevelRigorContribution(subject.name), 0);
+  const courseRigor = Math.max(0, Math.min(10, rigorRaw));
+
+  return {
+    subjects,
+    gpa,
+    courseRigor
+  };
+}
+
+function renderALevelComputedValues() {
+  const details = getALevelDetails();
+  if (details.error) {
+    aLevelGpaValue.textContent = "Not calculated yet";
+    aLevelCourseRigorValue.textContent = "Not calculated yet";
+    return;
+  }
+
+  aLevelGpaValue.textContent = details.gpa.toFixed(2);
+  aLevelCourseRigorValue.textContent = String(details.courseRigor);
+}
+
+function updateAcademicTrackVisibility() {
+  const curriculumType = curriculumTypeInput.value || "ib";
+  ibSection.hidden = curriculumType !== "ib";
+  aLevelsSection.hidden = curriculumType !== "a_levels";
+}
+
 function getSelectedActivityEntries() {
   return Array.from(extracurricularActivities.querySelectorAll(".activity-row"))
     .map((row) => ({
@@ -313,9 +691,12 @@ function parseSavedActivityDescriptions(value) {
 }
 
 function collectProfilePayload() {
-  const ibTotal = Number.parseInt(ibScoreInput.value, 10);
-  const courseRigor = Number.parseInt(courseRigorInput.value, 10);
+  const curriculumType = curriculumTypeInput.value || "ib";
+  const ibDetails = getIbDetails();
+  const aLevelDetails = getALevelDetails();
   const sat = Number.parseInt(satScoreInput.value, 10);
+  const act = Number.parseInt(actScoreInput.value, 10);
+  const testOptional = isApplyingTestOptional();
 
   return {
     id: currentUser.id,
@@ -326,9 +707,22 @@ function collectProfilePayload() {
     climate_preference: prefClimate.value || null,
     social_scene_preference: prefSocialScene.value || null,
     class_style_preference: prefClassStyle.value || null,
-    ib_total: Number.isNaN(ibTotal) ? null : ibTotal,
+    curriculum_type: curriculumType,
+    ib_total: curriculumType === "ib" && !ibDetails.error ? ibDetails.ibTotal : null,
     sat: Number.isNaN(sat) ? null : sat,
-    course_rigor: Number.isNaN(courseRigor) ? null : courseRigor,
+    act: Number.isNaN(act) ? null : act,
+    test_optional: testOptional,
+    course_rigor: curriculumType === "ib"
+      ? (ibDetails.error ? null : ibDetails.courseRigor)
+      : (aLevelDetails.error ? null : aLevelDetails.courseRigor),
+    ib_hl_subjects: curriculumType === "ib" && !ibDetails.error ? ibDetails.hlSubjects.map((subject) => subject.name) : [],
+    ib_hl_scores: curriculumType === "ib" && !ibDetails.error ? ibDetails.hlSubjects.map((subject) => Number.parseInt(subject.score, 10)) : [],
+    ib_sl_subjects: curriculumType === "ib" && !ibDetails.error ? ibDetails.slSubjects.map((subject) => subject.name) : [],
+    ib_sl_scores: curriculumType === "ib" && !ibDetails.error ? ibDetails.slSubjects.map((subject) => Number.parseInt(subject.score, 10)) : [],
+    ib_tok_grade: curriculumType === "ib" && !ibDetails.error ? ibDetails.tokGrade : null,
+    ib_ee_grade: curriculumType === "ib" && !ibDetails.error ? ibDetails.eeGrade : null,
+    a_level_subjects: curriculumType === "a_levels" && !aLevelDetails.error ? aLevelDetails.subjects.map((subject) => subject.name) : [],
+    a_level_grades: curriculumType === "a_levels" && !aLevelDetails.error ? aLevelDetails.subjects.map((subject) => subject.grade) : [],
     academic_score: currentAcademicScore,
     overall_score: currentProfileScore,
     igcse_grades: getSelectedSubjectGrades(),
@@ -337,6 +731,18 @@ function collectProfilePayload() {
     activity_names: getSelectedActivityNames(),
     activity_description: JSON.stringify(getSelectedActivityDescriptions())
   };
+}
+
+function getApplicationStatusKey(round, name) {
+  return `${round}:${name}`;
+}
+
+function getDefaultApplicationStatus() {
+  return "Working on Application";
+}
+
+function getApplicationStatus(round, name) {
+  return applicationStatuses[getApplicationStatusKey(round, name)] || getDefaultApplicationStatus();
 }
 
 function collectApplicationsPayload() {
@@ -351,6 +757,7 @@ function collectApplicationsPayload() {
       user_id: currentUser.id,
       university_name: application.name,
       application_round: application.round,
+      application_status: getApplicationStatus(application.round, application.name),
       category_for_user: currentProfileScore !== null && scoringMatch
         ? classifyUniversity(currentProfileScore, scoringMatch)
         : null,
@@ -511,9 +918,41 @@ function applyLoadedProfile(profile) {
     }
   }
 
-  ibScoreInput.value = profile?.ib_total ?? "";
-  courseRigorInput.value = profile?.course_rigor ?? "";
+  curriculumTypeInput.value = profile?.curriculum_type || "ib";
+
+  if (Array.isArray(profile?.ib_hl_subjects) && Array.isArray(profile?.ib_hl_scores) && profile.ib_hl_subjects.length === 3 && profile.ib_hl_scores.length === 3) {
+    ibHlSubjects.innerHTML = "";
+    profile.ib_hl_subjects.forEach((subject, index) => {
+      ibHlSubjects.appendChild(createIbSubjectRow("HL", index, subject || "", profile.ib_hl_scores[index] || ""));
+    });
+  }
+
+  if (Array.isArray(profile?.ib_sl_subjects) && Array.isArray(profile?.ib_sl_scores) && profile.ib_sl_subjects.length === 3 && profile.ib_sl_scores.length === 3) {
+    ibSlSubjects.innerHTML = "";
+    profile.ib_sl_subjects.forEach((subject, index) => {
+      ibSlSubjects.appendChild(createIbSubjectRow("SL", index, subject || "", profile.ib_sl_scores[index] || ""));
+    });
+  }
+
+  updateIbSubjectAvailability();
+  ibTokGradeInput.value = profile?.ib_tok_grade ?? "";
+  ibEeGradeInput.value = profile?.ib_ee_grade ?? "";
+
+  if (Array.isArray(profile?.a_level_subjects) && Array.isArray(profile?.a_level_grades) && profile.a_level_subjects.length === 3 && profile.a_level_grades.length === 3) {
+    aLevelSubjects.innerHTML = "";
+    profile.a_level_subjects.forEach((subject, index) => {
+      aLevelSubjects.appendChild(createALevelSubjectRow(index, subject || "", profile.a_level_grades[index] || ""));
+    });
+  }
+
+  updateALevelSubjectAvailability();
+  updateAcademicTrackVisibility();
+  renderIbComputedValues();
+  renderALevelComputedValues();
   satScoreInput.value = profile?.sat ?? "";
+  actScoreInput.value = profile?.act ?? "";
+  testOptionalInput.checked = Boolean(profile?.test_optional);
+  syncTestingInputs();
   prefFinancialAid.value = profile?.aid_requirement ?? "";
   prefClimate.value = profile?.climate_preference ?? "";
   prefSocialScene.value = profile?.social_scene_preference ?? "";
@@ -568,6 +1007,9 @@ function applyLoadedApplications(applications) {
   selectedPlannerEd = "";
   selectedPlannerEa.clear();
   selectedPlannerRd.clear();
+  Object.keys(applicationStatuses).forEach((key) => {
+    delete applicationStatuses[key];
+  });
 
   applications.forEach((application) => {
     if (application.application_round === "ED") {
@@ -579,6 +1021,8 @@ function applyLoadedApplications(applications) {
     if (application.application_round === "RD") {
       selectedPlannerRd.add(application.university_name);
     }
+
+    applicationStatuses[getApplicationStatusKey(application.application_round, application.university_name)] = application.application_status || getDefaultApplicationStatus();
   });
 
   renderPlanner();
@@ -762,16 +1206,19 @@ async function initializeAuth() {
 function showPage(pageName) {
   const isScorer = pageName === "scorer";
   const isPlanner = pageName === "planner";
+  const isStatuses = pageName === "statuses";
   const isQuestionnaire = pageName === "questionnaire";
   const isTasks = pageName === "tasks";
 
   pageScorer.classList.toggle("page-view-active", isScorer);
   pagePlanner.classList.toggle("page-view-active", isPlanner);
+  pageStatuses.classList.toggle("page-view-active", isStatuses);
   pageQuestionnaire.classList.toggle("page-view-active", isQuestionnaire);
   pageTasks.classList.toggle("page-view-active", isTasks);
 
   navScorer.classList.toggle("nav-button-active", isScorer);
   navPlanner.classList.toggle("nav-button-active", isPlanner);
+  navStatuses.classList.toggle("nav-button-active", isStatuses);
   navQuestionnaire.classList.toggle("nav-button-active", isQuestionnaire);
   navTasks.classList.toggle("nav-button-active", isTasks);
 }
@@ -787,14 +1234,14 @@ function createSubjectRow(subjectName = "", grade = "A*") {
     <label class="field">
       <span>Grade</span>
       <select class="subject-grade">
-        <option value="A*">A*</option>
-        <option value="A">A</option>
-        <option value="B">B</option>
-        <option value="C">C</option>
-        <option value="D">D</option>
-        <option value="E">E</option>
-        <option value="F">F</option>
-        <option value="G">G</option>
+        <option value="A*">A* / 8-9</option>
+        <option value="A">A / 7</option>
+        <option value="B">B / 6</option>
+        <option value="C">C / 5</option>
+        <option value="D">D / 4</option>
+        <option value="E">E / 3</option>
+        <option value="F">F / 2</option>
+        <option value="G">G / 1</option>
       </select>
     </label>
     <button type="button" class="icon-button remove-subject-button">Remove</button>
@@ -812,7 +1259,7 @@ function createActivityRow(index) {
       <input type="text" class="activity-name" placeholder="e.g. Debate club president" />
     </label>
     <label class="field activity-description-field">
-      <span>Activity description</span>
+      <span>Activity description (Optional)</span>
       <textarea
         class="activity-description"
         rows="3"
@@ -875,7 +1322,7 @@ function getIgcseGpa() {
   const validRows = rows.filter((row) => row.querySelector(".subject-name").value.trim().length > 0);
 
   if (validRows.length === 0) {
-    return { error: "Enter a name for at least one IGCSE subject." };
+    return { error: "Enter a name for at least one IGCSE / GCSE subject." };
   }
 
   const totalPoints = validRows.reduce((sum, row) => {
@@ -900,34 +1347,118 @@ function convertSatToAcademicScore(satScore) {
   return satScore / 25;
 }
 
+function convertActToAcademicScore(actScore) {
+  switch (actScore) {
+    case 36:
+    case 35:
+      return 100;
+    case 34:
+      return 96;
+    case 33:
+      return 92;
+    case 32:
+      return 88;
+    case 31:
+      return 84;
+    case 30:
+      return 80;
+    case 29:
+      return 76;
+    case 28:
+      return 72;
+    case 27:
+      return 68;
+    case 26:
+      return 64;
+    case 25:
+      return 60;
+    case 24:
+      return 56;
+    case 23:
+      return 52;
+    case 22:
+      return 48;
+    case 21:
+      return 44;
+    case 20:
+      return 40;
+    default:
+      if (actScore < 20) {
+        return actScore * 2;
+      }
+      return 0;
+  }
+}
+
 function getAcademicScore() {
   const igcseResult = getIgcseGpa();
   if (igcseResult.error) {
     return igcseResult;
   }
 
-  const ibTotal = Number.parseInt(ibScoreInput.value, 10);
-  const courseRigor = Number.parseInt(courseRigorInput.value, 10);
+  const curriculumType = curriculumTypeInput.value || "ib";
   const satScore = Number.parseFloat(satScoreInput.value);
+  const actScore = Number.parseFloat(actScoreInput.value);
+  const hasSat = !Number.isNaN(satScore);
+  const hasAct = !Number.isNaN(actScore);
+  const testOptional = isApplyingTestOptional();
 
-  if (Number.isNaN(ibTotal) || Number.isNaN(courseRigor) || Number.isNaN(satScore)) {
-    return { error: "Please enter IB grade, course rigor, and SAT score." };
+  if (!testOptional && !hasSat && !hasAct) {
+    return { error: "Enter at least one standardized test score: SAT or ACT, or choose test optional." };
   }
 
-  if (ibTotal < 1 || ibTotal > 45) {
-    return { error: "Overall IB grade must be between 1 and 45." };
+  if (!testOptional && hasSat && (satScore < 400 || satScore > 1600)) {
+    return { error: "SAT score must be between 400 and 1600." };
+  }
+
+  if (!testOptional && hasAct && (actScore < 1 || actScore > 36)) {
+    return { error: "ACT score must be between 1 and 36." };
+  }
+
+  let curriculumGpa;
+  let courseRigor;
+  let curriculumDetails;
+
+  if (curriculumType === "a_levels") {
+    const aLevelDetails = getALevelDetails();
+    if (aLevelDetails.error) {
+      return { error: aLevelDetails.error };
+    }
+    curriculumGpa = aLevelDetails.gpa;
+    courseRigor = aLevelDetails.courseRigor;
+    curriculumDetails = {
+      curriculumLabel: "A-Level GPA",
+      curriculumValue: aLevelDetails.gpa,
+      curriculumTotalLabel: "A-Level Subjects Completed",
+      curriculumTotalValue: aLevelDetails.subjects.length,
+      courseRigor,
+      corePoints: null
+    };
+  } else {
+    const ibDetails = getIbDetails();
+    if (ibDetails.error) {
+      return { error: ibDetails.error };
+    }
+    if (ibDetails.ibTotal < 1 || ibDetails.ibTotal > 45) {
+      return { error: "IB total must be between 1 and 45." };
+    }
+    curriculumGpa = calculateIbGpa(ibDetails.ibTotal);
+    courseRigor = ibDetails.courseRigor;
+    curriculumDetails = {
+      curriculumLabel: "IB GPA",
+      curriculumValue: curriculumGpa,
+      curriculumTotalLabel: "IB Total",
+      curriculumTotalValue: ibDetails.ibTotal,
+      courseRigor,
+      corePoints: ibDetails.corePoints
+    };
   }
 
   if (courseRigor < 0 || courseRigor > 10) {
     return { error: "Course rigor must be between 0 and 10." };
   }
 
-  if (satScore < 400 || satScore > 1600) {
-    return { error: "SAT score must be between 400 and 1600." };
-  }
-
-  const ibGpa = calculateIbGpa(ibTotal);
-  const unweightedGpa = 0.3 * igcseResult.value + 0.7 * ibGpa;
+  const unweightedGpa = 0.3 * igcseResult.value + 0.7 * curriculumGpa;
 
   let weightedGpa = unweightedGpa;
   if (courseRigor === 10) weightedGpa = unweightedGpa + 1.0;
@@ -937,19 +1468,46 @@ function getAcademicScore() {
   else if (courseRigor === 6) weightedGpa = unweightedGpa + 0.2;
 
   const gradesAcademicScore = clampScore(weightedGpa * 20);
-  const satAcademicScore = clampScore(convertSatToAcademicScore(satScore));
-  const overallAcademicScore = (gradesAcademicScore + satAcademicScore) / 2;
+  const satAcademicScore = !testOptional && hasSat ? clampScore(convertSatToAcademicScore(satScore)) : null;
+  const actAcademicScore = !testOptional && hasAct ? clampScore(convertActToAcademicScore(actScore)) : null;
+  const testAcademicScore = testOptional
+    ? gradesAcademicScore
+    : satAcademicScore === null
+      ? actAcademicScore
+      : actAcademicScore === null
+        ? satAcademicScore
+        : Math.max(satAcademicScore, actAcademicScore);
+  const chosenTest = testOptional
+    ? "Test Optional"
+    : satAcademicScore === null
+      ? "ACT"
+      : actAcademicScore === null
+        ? "SAT"
+        : actAcademicScore > satAcademicScore
+          ? "ACT"
+          : "SAT";
+  const overallAcademicScore = (gradesAcademicScore + testAcademicScore) / 2;
 
   return {
     value: overallAcademicScore,
     details: {
       igcseGpa: igcseResult.value,
-      ibGpa,
+      curriculumType,
+      curriculumLabel: curriculumDetails.curriculumLabel,
+      curriculumValue: curriculumDetails.curriculumValue,
+      curriculumTotalLabel: curriculumDetails.curriculumTotalLabel,
+      curriculumTotalValue: curriculumDetails.curriculumTotalValue,
+      corePoints: curriculumDetails.corePoints,
       unweightedGpa,
       weightedGpa,
       gradesAcademicScore,
       satAcademicScore,
-      subjectCount: igcseResult.subjectCount
+      actAcademicScore,
+      testAcademicScore,
+      chosenTest,
+      testOptional,
+      subjectCount: igcseResult.subjectCount,
+      courseRigor
     }
   };
 }
@@ -1030,17 +1588,14 @@ function getMappedScoringUniversity(plannerName) {
 }
 
 function getPlannerCategoryMarkup(plannerName) {
-  if (currentProfileScore === null) {
-    return "";
-  }
-
   const scoringMatch = getMappedScoringUniversity(plannerName);
+  const normalizedProfileScore = Number(currentProfileScore);
 
-  if (!scoringMatch) {
+  if (!scoringMatch || !Number.isFinite(normalizedProfileScore)) {
     return "";
   }
 
-  const category = classifyUniversity(currentProfileScore, scoringMatch);
+  const category = classifyUniversity(normalizedProfileScore, scoringMatch);
   return `<span class="badge planner-category ${getBadgeClass(category)}">${category}</span>`;
 }
 
@@ -1151,7 +1706,23 @@ function getFitScore(plannerName) {
   const socialSceneScore = getSocialSceneScore(preferences.socialScenePreference, university.social_scene_value);
   const classStyleScore = getClassStyleScore(preferences.classStylePreference, university.class_style_value);
 
-  return Math.round((0.64 * aidFitScore) + (0.06 * campusTypeScore) + (0.06 * classSizeScore) + (0.06 * climateScore) + (0.06 * campusVibeScore) + (0.06 * socialSceneScore) + (0.06 * classStyleScore));
+  const scores = [aidFitScore, campusTypeScore, classSizeScore, climateScore, campusVibeScore, socialSceneScore, classStyleScore]
+    .map((score, index) => {
+      if (Number.isFinite(score)) {
+        return score;
+      }
+      return index === 0 ? 0 : 50;
+    });
+
+  return Math.round(
+    (0.64 * scores[0]) +
+    (0.06 * scores[1]) +
+    (0.06 * scores[2]) +
+    (0.06 * scores[3]) +
+    (0.06 * scores[4]) +
+    (0.06 * scores[5]) +
+    (0.06 * scores[6])
+  );
 }
 
 function getFitScoreMarkup(plannerName) {
@@ -1181,28 +1752,49 @@ function getPlannerBadgesMarkup(plannerName) {
   const categoryMarkup = getPlannerCategoryMarkup(plannerName);
 
   if (!fitScoreMarkup && !categoryMarkup) {
-    return "";
+    return `<span class="planner-option-badges"><span class="badge planner-category badge-target">Calculating...</span></span>`;
   }
 
   return `<span class="planner-option-badges">${fitScoreMarkup}${categoryMarkup}</span>`;
 }
 
-function sortPlannerSchoolsByFit(schools) {
-  const preferences = getQuestionnairePreferences();
-  if (!preferences) {
-    return schools;
-  }
+function getPlannerCategoryRank(category) {
+  if (category === "Safety") return 1;
+  if (category === "Match") return 2;
+  if (category === "Target") return 3;
+  if (category === "Reach") return 4;
+  return 5;
+}
 
-  return [...schools].sort((a, b) => {
-    const fitA = getFitScore(a.name) ?? -1;
-    const fitB = getFitScore(b.name) ?? -1;
+function filterAndSortPlannerSchools(schools, roundKey) {
+  const viewState = plannerViewState[roundKey];
+  const searchTerm = viewState.search.trim().toLowerCase();
+  const direction = viewState.sortDirection === "asc" ? 1 : -1;
 
-    if (fitB !== fitA) {
-      return fitB - fitA;
-    }
+  return schools
+    .filter((school) => !searchTerm || school.name.toLowerCase().includes(searchTerm))
+    .slice()
+    .sort((a, b) => {
+      if (viewState.sortField === "category") {
+        const categoryA = currentProfileScore !== null ? classifyUniversity(currentProfileScore, a) : null;
+        const categoryB = currentProfileScore !== null ? classifyUniversity(currentProfileScore, b) : null;
+        const rankA = categoryA ? getPlannerCategoryRank(categoryA) : Number.POSITIVE_INFINITY;
+        const rankB = categoryB ? getPlannerCategoryRank(categoryB) : Number.POSITIVE_INFINITY;
+        if (rankA !== rankB) {
+          return (rankA - rankB) * direction;
+        }
+      } else {
+        const fitA = getFitScore(a.name);
+        const fitB = getFitScore(b.name);
+        const normalizedFitA = Number.isFinite(fitA) ? fitA : Number.NEGATIVE_INFINITY;
+        const normalizedFitB = Number.isFinite(fitB) ? fitB : Number.NEGATIVE_INFINITY;
+        if (normalizedFitA !== normalizedFitB) {
+          return (normalizedFitA - normalizedFitB) * direction;
+        }
+      }
 
-    return a.name.localeCompare(b.name);
-  });
+      return a.name.localeCompare(b.name);
+    });
 }
 
 async function calculateAndRender() {
@@ -1231,8 +1823,13 @@ async function calculateAndRender() {
         <strong>${result.details.igcseGpa.toFixed(2)}</strong>
       </div>
       <div class="breakdown-item">
-        <span>IB GPA</span>
-        <strong>${result.details.ibGpa.toFixed(2)}</strong>
+        <span>${result.details.curriculumLabel} (${result.details.curriculumTotalLabel} ${result.details.curriculumType === "ib" ? `${result.details.curriculumTotalValue}/45` : result.details.curriculumTotalValue})</span>
+        <strong>${result.details.curriculumValue.toFixed(2)}</strong>
+      </div>
+      ${result.details.corePoints === null ? "" : `<div class="breakdown-item"><span>TOK + EE Core Points</span><strong>${result.details.corePoints}</strong></div>`}
+      <div class="breakdown-item">
+        <span>Calculated Course Rigor</span>
+        <strong>${result.details.courseRigor}</strong>
       </div>
       <div class="breakdown-item">
         <span>Unweighted GPA</span>
@@ -1246,9 +1843,11 @@ async function calculateAndRender() {
         <span>Grades Academic Score</span>
         <strong>${result.details.gradesAcademicScore.toFixed(1)}</strong>
       </div>
+      ${result.details.satAcademicScore === null ? "" : `<div class="breakdown-item"><span>SAT Academic Score</span><strong>${result.details.satAcademicScore.toFixed(1)}</strong></div>`}
+      ${result.details.actAcademicScore === null ? "" : `<div class="breakdown-item"><span>ACT Academic Score</span><strong>${result.details.actAcademicScore.toFixed(1)}</strong></div>`}
       <div class="breakdown-item">
-        <span>SAT Academic Score</span>
-        <strong>${result.details.satAcademicScore.toFixed(1)}</strong>
+        <span>Chosen Test Score (${result.details.chosenTest})</span>
+        <strong>${result.details.testAcademicScore.toFixed(1)}</strong>
       </div>
       <div class="breakdown-item">
         <span>Overall Academic Score</span>
@@ -1273,21 +1872,118 @@ async function calculateAndRender() {
   }
 }
 
+function getApplicationStatusClass(status) {
+  if (status === "Applied") return "status-applied";
+  if (status === "Rejected") return "status-rejected";
+  if (status === "Deferred") return "status-deferred";
+  if (status === "Waitlisted") return "status-waitlisted";
+  if (status === "Accepted") return "status-accepted";
+  if (status === "Enrolled") return "status-enrolled";
+  return "status-working";
+}
+
+function renderApplicationStatusSection(container, applications, emptyText) {
+  if (applications.length === 0) {
+    container.className = "status-list results-empty";
+    container.textContent = emptyText;
+    return;
+  }
+
+  container.className = "status-list";
+  container.innerHTML = applications
+    .map((application) => {
+      const status = getApplicationStatus(application.round, application.name);
+      return `
+        <div class="status-card">
+          <div>
+            <h4>${application.name}</h4>
+            <p class="helper-text">${application.round} · ${application.deadline}</p>
+          </div>
+          <label class="field status-field">
+            <span class="status-label ${getApplicationStatusClass(status)}">${status}</span>
+            <select class="application-status-select" data-round="${application.round}" data-name="${application.name}">
+              <option value="Working on Application" ${status === "Working on Application" ? "selected" : ""}>Working on Application</option>
+              <option value="Applied" ${status === "Applied" ? "selected" : ""}>Applied</option>
+              <option value="Rejected" ${status === "Rejected" ? "selected" : ""}>Rejected</option>
+              <option value="Deferred" ${status === "Deferred" ? "selected" : ""}>Deferred</option>
+              <option value="Waitlisted" ${status === "Waitlisted" ? "selected" : ""}>Waitlisted</option>
+              <option value="Accepted" ${status === "Accepted" ? "selected" : ""}>Accepted</option>
+              <option value="Enrolled" ${status === "Enrolled" ? "selected" : ""}>Enrolled</option>
+            </select>
+          </label>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function renderApplicationStatuses() {
+  const applications = getAppliedSchoolSelections();
+  const edApplications = applications.filter((application) => application.round === "ED");
+  const eaApplications = applications.filter((application) => application.round === "EA");
+  const rdApplications = applications.filter((application) => application.round === "RD");
+
+  renderApplicationStatusSection(statusesEdList, edApplications, "No Early Decision applications selected.");
+  renderApplicationStatusSection(statusesEaList, eaApplications, "No Early Action applications selected.");
+  renderApplicationStatusSection(statusesRdList, rdApplications, "No Regular Decision applications selected.");
+}
+
+function getPlannerAvailability(school) {
+  if (!isApplyingTestOptional()) {
+    return { disabled: false, reason: "" };
+  }
+
+  if (school.allows_test_optional) {
+    return { disabled: false, reason: "" };
+  }
+
+  return { disabled: true, reason: "Testing required" };
+}
+
+function getPlannerRestrictionMarkup(school) {
+  const availability = getPlannerAvailability(school);
+  return availability.reason ? `<span class="planner-restriction">${availability.reason}</span>` : "";
+}
+
+function isSchoolBlockedForPlanner(inputValue, edSchool, selectedEa, selectedRd, roundKey) {
+  const school = universities.find((entry) => entry.name === inputValue);
+  const eligibilityBlocked = school ? getPlannerAvailability(school).disabled : false;
+
+  if (eligibilityBlocked) {
+    return true;
+  }
+
+  if (roundKey === "ea") {
+    return inputValue === edSchool || selectedRd.has(inputValue);
+  }
+
+  if (roundKey === "rd") {
+    return inputValue === edSchool || selectedEa.has(inputValue);
+  }
+
+  if (roundKey === "ed") {
+    return selectedEa.has(inputValue) || selectedRd.has(inputValue);
+  }
+
+  return false;
+}
+
 function renderPlanner() {
-  const edSchools = sortPlannerSchoolsByFit(universities.filter((school) => school.hasED));
-  const eaSchools = sortPlannerSchoolsByFit(universities.filter((school) => school.hasEA));
-  const rdSchools = sortPlannerSchoolsByFit(universities);
+  const edSchools = filterAndSortPlannerSchools(universities.filter((school) => school.hasED), "ed");
+  const eaSchools = filterAndSortPlannerSchools(universities.filter((school) => school.hasEA), "ea");
+  const rdSchools = filterAndSortPlannerSchools(universities, "rd");
 
   plannerEdList.innerHTML = edSchools
     .map(
       (school) => `
-        <label class="planner-option" data-school="${school.name}">
-          <input type="checkbox" class="planner-ed-checkbox" value="${school.name}" ${selectedPlannerEd === school.name ? "checked" : ""} />
+        <label class="planner-option ${getPlannerAvailability(school).disabled ? "planner-option-disabled" : ""}" data-school="${school.name}">
+          <input type="checkbox" class="planner-ed-checkbox" value="${school.name}" ${selectedPlannerEd === school.name ? "checked" : ""} ${getPlannerAvailability(school).disabled ? "disabled" : ""} />
           <span class="planner-option-text">
             <strong>${school.name}</strong>
             <span class="planner-option-meta">
               <span>Binding Early Decision</span>
               ${getPlannerBadgesMarkup(school.name)}
+              ${getPlannerRestrictionMarkup(school)}
             </span>
           </span>
         </label>
@@ -1298,13 +1994,14 @@ function renderPlanner() {
   plannerEaList.innerHTML = eaSchools
     .map(
       (school) => `
-        <label class="planner-option" data-school="${school.name}">
-          <input type="checkbox" class="planner-ea-checkbox" value="${school.name}" ${selectedPlannerEa.has(school.name) ? "checked" : ""} />
+        <label class="planner-option ${getPlannerAvailability(school).disabled ? "planner-option-disabled" : ""}" data-school="${school.name}">
+          <input type="checkbox" class="planner-ea-checkbox" value="${school.name}" ${selectedPlannerEa.has(school.name) ? "checked" : ""} ${getPlannerAvailability(school).disabled ? "disabled" : ""} />
           <span class="planner-option-text">
             <strong>${school.name}</strong>
             <span class="planner-option-meta">
               <span>Non-binding Early Action</span>
               ${getPlannerBadgesMarkup(school.name)}
+              ${getPlannerRestrictionMarkup(school)}
             </span>
           </span>
         </label>
@@ -1315,13 +2012,14 @@ function renderPlanner() {
   plannerRdList.innerHTML = rdSchools
     .map(
       (school) => `
-        <label class="planner-option" data-school="${school.name}">
-          <input type="checkbox" class="planner-rd-checkbox" value="${school.name}" ${selectedPlannerRd.has(school.name) ? "checked" : ""} />
+        <label class="planner-option ${getPlannerAvailability(school).disabled ? "planner-option-disabled" : ""}" data-school="${school.name}">
+          <input type="checkbox" class="planner-rd-checkbox" value="${school.name}" ${selectedPlannerRd.has(school.name) ? "checked" : ""} ${getPlannerAvailability(school).disabled ? "disabled" : ""} />
           <span class="planner-option-text">
             <strong>${school.name}</strong>
             <span class="planner-option-meta">
               <span>Regular Decision</span>
               ${getPlannerBadgesMarkup(school.name)}
+              ${getPlannerRestrictionMarkup(school)}
             </span>
           </span>
         </label>
@@ -1383,58 +2081,57 @@ function syncPlannerState(trigger) {
   const selectedEa = selectedPlannerEa;
   const selectedRd = selectedPlannerRd;
 
+  if (selectedPlannerEd && isSchoolBlockedForPlanner(selectedPlannerEd, selectedPlannerEd, selectedEa, selectedRd, "ed")) {
+    selectedPlannerEd = "";
+  }
+
+  Array.from(selectedEa).forEach((name) => {
+    if (isSchoolBlockedForPlanner(name, selectedPlannerEd, selectedEa, selectedRd, "ea")) {
+      selectedEa.delete(name);
+    }
+  });
+
+  Array.from(selectedRd).forEach((name) => {
+    if (isSchoolBlockedForPlanner(name, selectedPlannerEd, selectedEa, selectedRd, "rd")) {
+      selectedRd.delete(name);
+    }
+  });
+
   eaInputs.forEach((input) => {
-    const isBlocked = input.value === edSchool || selectedRd.has(input.value);
+    const isBlocked = isSchoolBlockedForPlanner(input.value, selectedPlannerEd, selectedEa, selectedRd, "ea");
     input.disabled = isBlocked;
     input.closest(".planner-option").classList.toggle("planner-option-disabled", isBlocked);
   });
 
   rdInputs.forEach((input) => {
-    const isBlocked = input.value === edSchool || selectedEa.has(input.value);
+    const isBlocked = isSchoolBlockedForPlanner(input.value, selectedPlannerEd, selectedEa, selectedRd, "rd");
     input.disabled = isBlocked;
     input.closest(".planner-option").classList.toggle("planner-option-disabled", isBlocked);
   });
 
   edInputs.forEach((input) => {
-    const isBlocked = selectedEa.has(input.value) || selectedRd.has(input.value);
+    const isBlocked = isSchoolBlockedForPlanner(input.value, selectedPlannerEd, selectedEa, selectedRd, "ed");
     input.disabled = isBlocked;
     input.closest(".planner-option").classList.toggle("planner-option-disabled", isBlocked);
   });
 
-  renderPlannerSummary();
+  const activeSelections = new Set(getAppliedSchoolSelections().map((application) => getApplicationStatusKey(application.round, application.name)));
+  Object.keys(applicationStatuses).forEach((key) => {
+    if (!activeSelections.has(key)) {
+      delete applicationStatuses[key];
+    }
+  });
+
+  getAppliedSchoolSelections().forEach((application) => {
+    const key = getApplicationStatusKey(application.round, application.name);
+    if (!applicationStatuses[key]) {
+      applicationStatuses[key] = getDefaultApplicationStatus();
+    }
+  });
+
+  renderApplicationStatuses();
   syncApplicationTasks();
   schedulePersistence();
-}
-
-function renderPlannerSummary() {
-  const edSchool = selectedPlannerEd;
-  const eaSchools = Array.from(selectedPlannerEa).sort((a, b) => a.localeCompare(b));
-  const rdSchools = Array.from(selectedPlannerRd).sort((a, b) => a.localeCompare(b));
-
-  if (!edSchool && eaSchools.length === 0 && rdSchools.length === 0) {
-    plannerSummary.className = "results-empty";
-    plannerSummary.textContent = "Start selecting schools to build your application plan.";
-    return;
-  }
-
-  const renderList = (items, emptyText) =>
-    items.length > 0 ? `<ul class="summary-list">${items.map((item) => `<li>${item}</li>`).join("")}</ul>` : `<p class="helper-text">${emptyText}</p>`;
-
-  plannerSummary.className = "planner-summary-grid";
-  plannerSummary.innerHTML = `
-    <section class="summary-block">
-      <h3 class="heading-ed">Early Decision</h3>
-      ${edSchool ? renderList([edSchool], "No Early Decision school selected.") : '<p class="helper-text">No Early Decision school selected.</p>'}
-    </section>
-    <section class="summary-block">
-      <h3 class="heading-ea">Early Action</h3>
-      ${renderList(eaSchools, "No Early Action schools selected.")}
-    </section>
-    <section class="summary-block">
-      <h3 class="heading-rd">Regular Decision</h3>
-      ${renderList(rdSchools, "No Regular Decision schools selected.")}
-    </section>
-  `;
 }
 
 function getSelectedRadioValue(name) {
@@ -1645,6 +2342,23 @@ function upsertGeneratedTask(config) {
   });
 }
 
+function getSupplementalTaskPriority(applicationName) {
+  const university = getMappedScoringUniversity(applicationName);
+  const normalizedProfileScore = Number(currentProfileScore);
+
+  if (!university || !Number.isFinite(normalizedProfileScore)) {
+    return 5;
+  }
+
+  const category = classifyUniversity(normalizedProfileScore, university);
+  if (category === "Hard Reach") return 7;
+  if (category === "Reach") return 7;
+  if (category === "Target") return 6;
+  if (category === "Match") return 5;
+  if (category === "Safety") return 3;
+  return 5;
+}
+
 function syncApplicationTasks() {
   const selectedApplications = getAppliedSchoolSelections();
   const desiredKeys = new Set();
@@ -1673,7 +2387,7 @@ function syncApplicationTasks() {
       title: `${application.name} Supplemental Essays`,
       type: "Essay",
       date: toInputDate(application.deadline),
-      priority: 5,
+      priority: getSupplementalTaskPriority(application.name),
       hours: 4
     });
   });
@@ -1799,6 +2513,7 @@ savePreferencesButton.addEventListener("click", async () => {
 
 navScorer.addEventListener("click", () => showPage("scorer"));
 navPlanner.addEventListener("click", () => showPage("planner"));
+navStatuses.addEventListener("click", () => showPage("statuses"));
 navQuestionnaire.addEventListener("click", () => showPage("questionnaire"));
 navTasks.addEventListener("click", () => showPage("tasks"));
 
@@ -1821,6 +2536,38 @@ igcseSubjects.addEventListener("click", (event) => {
 });
 
 
+curriculumTypeInput.addEventListener("change", () => {
+  updateAcademicTrackVisibility();
+  schedulePersistence();
+});
+
+testOptionalInput.addEventListener("change", () => {
+  syncTestingInputs();
+  renderPlanner();
+  schedulePersistence();
+});
+
+[ibHlSubjects, ibSlSubjects].forEach((container) => {
+  container.addEventListener("change", () => {
+    updateIbSubjectAvailability();
+    renderIbComputedValues();
+    schedulePersistence();
+  });
+});
+
+[ibTokGradeInput, ibEeGradeInput].forEach((input) => {
+  input.addEventListener("change", () => {
+    renderIbComputedValues();
+    schedulePersistence();
+  });
+});
+
+aLevelSubjects.addEventListener("change", () => {
+  updateALevelSubjectAvailability();
+  renderALevelComputedValues();
+  schedulePersistence();
+});
+
 plannerEdList.addEventListener("change", (event) => {
   if (!(event.target instanceof HTMLInputElement)) return;
   syncPlannerState({ type: "ed", value: event.target.value });
@@ -1834,6 +2581,24 @@ plannerEaList.addEventListener("change", (event) => {
 plannerRdList.addEventListener("change", (event) => {
   if (!(event.target instanceof HTMLInputElement)) return;
   syncPlannerState({ type: "rd", value: event.target.value });
+});
+
+[
+  [plannerEdSearch, "ed", "search"],
+  [plannerEaSearch, "ea", "search"],
+  [plannerRdSearch, "rd", "search"],
+  [plannerEdSortField, "ed", "sortField"],
+  [plannerEaSortField, "ea", "sortField"],
+  [plannerRdSortField, "rd", "sortField"],
+  [plannerEdSortDirection, "ed", "sortDirection"],
+  [plannerEaSortDirection, "ea", "sortDirection"],
+  [plannerRdSortDirection, "rd", "sortDirection"]
+].forEach(([element, roundKey, field]) => {
+  element.addEventListener(field === "search" ? "input" : "change", () => {
+    plannerViewState[roundKey][field] = element.value;
+    renderPlanner();
+    syncPlannerState();
+  });
 });
 
 [prefFinancialAid, prefClimate, prefCampusVibe, prefSocialScene, prefClassStyle].forEach((element) => {
@@ -1927,6 +2692,27 @@ taskSortField.addEventListener("change", () => {
 taskSortDirection.addEventListener("change", () => {
   taskSortDirectionValue = taskSortDirection.value;
   renderTaskList();
+});
+
+[statusesEdList, statusesEaList, statusesRdList].forEach((container) => {
+  container.addEventListener("change", async (event) => {
+    if (!(event.target instanceof HTMLSelectElement) || !event.target.classList.contains("application-status-select")) {
+      return;
+    }
+
+    const round = event.target.dataset.round;
+    const name = event.target.dataset.name;
+    if (!round || !name) {
+      return;
+    }
+
+    applicationStatuses[getApplicationStatusKey(round, name)] = event.target.value;
+    renderApplicationStatuses();
+    const saved = await persistApplicationsData();
+    if (saved) {
+      setAuthStatus(`Signed in as ${currentUser.email}. Application statuses saved.`);
+    }
+  });
 });
 
 taskList.addEventListener("click", async (event) => {
@@ -2074,6 +2860,10 @@ campusRanking.addEventListener("drop", (event) => {
 
 igcseSubjects.appendChild(createSubjectRow("Mathematics", "A*"));
 igcseSubjects.appendChild(createSubjectRow("English Language", "A"));
+initializeIbInputs();
+initializeALevelInputs();
+updateAcademicTrackVisibility();
+syncTestingInputs();
 
 for (let i = 0; i < 10; i += 1) {
   extracurricularActivities.appendChild(createActivityRow(i));
