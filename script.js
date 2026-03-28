@@ -1134,14 +1134,9 @@ async function handleAuthSubmit(mode) {
   authPasswordInput.value = "";
 
   if (mode === "signup" && !data.session) {
-    const signInAfterSignup = await supabase.auth.signInWithPassword({ email, password });
-    if (!signInAfterSignup.error && signInAfterSignup.data.session) {
-      data = signInAfterSignup.data;
-    } else {
-      setAuthStatus("Account created. If you are not signed in automatically, disable email confirmation in Supabase Auth > Email.");
-      updateAuthUi(null);
-      return;
-    }
+    setAuthStatus("Account created. Check your email to activate your account.");
+    updateAuthUi(null);
+    return;
   }
 
   updateAuthUi(data.session);
