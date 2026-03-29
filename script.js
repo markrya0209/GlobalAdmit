@@ -119,11 +119,19 @@ const navQuestionnaire = document.getElementById("nav-questionnaire");
 const navTasks = document.getElementById("nav-tasks");
 const appContent = document.getElementById("app-content");
 const authShell = document.getElementById("auth-shell");
-const authForm = document.getElementById("auth-form");
-const authEmailInput = document.getElementById("auth-email");
-const authPasswordInput = document.getElementById("auth-password");
+const signinForm = document.getElementById("signin-form");
+const signupForm = document.getElementById("signup-form");
 const authStatus = document.getElementById("auth-status");
-const authSignupButton = document.getElementById("auth-signup-button");
+const authTabSignin = document.getElementById("auth-tab-signin");
+const authTabSignup = document.getElementById("auth-tab-signup");
+const signinEmailInput = document.getElementById("signin-email");
+const signinPasswordInput = document.getElementById("signin-password");
+const signupFirstNameInput = document.getElementById("signup-first-name");
+const signupLastNameInput = document.getElementById("signup-last-name");
+const signupEmailInput = document.getElementById("signup-email");
+const signupPasswordInput = document.getElementById("signup-password");
+const signupCountryInput = document.getElementById("signup-country");
+const signupReferralInput = document.getElementById("signup-referral");
 const appSignoutButton = document.getElementById("app-signout-button");
 
 const igcseSubjects = document.getElementById("igcse-subjects");
@@ -208,9 +216,10 @@ let taskFilter = "upcoming";
 let taskSortFieldValue = "date";
 let taskSortDirectionValue = "asc";
 let editingTaskId = null;
-let authMode = "signin";
+let authView = "signin";
 let isAuthBusy = false;
 let currentUser = null;
+let currentProfile = null;
 let isHydratingData = false;
 let persistTimer = null;
 
@@ -229,13 +238,107 @@ function setAuthStatus(message, isError = false) {
   authStatus.classList.toggle("auth-status-error", isError);
 }
 
+function getReferralOptions() {
+  return [
+    "Recommended by school",
+    "Recommended by family / friends",
+    "Tiktok",
+    "Instagram",
+    "Google Search",
+    "Other"
+  ];
+}
+
+function setAuthView(view) {
+  authView = view === "signup" ? "signup" : "signin";
+  const isSignin = authView === "signin";
+
+  signinForm.hidden = !isSignin;
+  signupForm.hidden = isSignin;
+  authTabSignin.classList.toggle("auth-mode-button-active", isSignin);
+  authTabSignup.classList.toggle("auth-mode-button-active", !isSignin);
+  authTabSignin.setAttribute("aria-selected", String(isSignin));
+  authTabSignup.setAttribute("aria-selected", String(!isSignin));
+}
+
 function setAuthBusyState(isBusy) {
   isAuthBusy = isBusy;
-  authEmailInput.disabled = isBusy;
-  authPasswordInput.disabled = isBusy;
-  authSignupButton.disabled = isBusy;
-  appSignoutButton.disabled = isBusy;
-  authForm.querySelector('button[type="submit"]').disabled = isBusy;
+  [
+    signinEmailInput,
+    signinPasswordInput,
+    signupFirstNameInput,
+    signupLastNameInput,
+    signupEmailInput,
+    signupPasswordInput,
+    signupCountryInput,
+    signupReferralInput,
+    authTabSignin,
+    authTabSignup,
+    appSignoutButton
+  ].forEach((element) => {
+    element.disabled = isBusy;
+  });
+
+  signinForm.querySelector('button[type="submit"]').disabled = isBusy;
+  signupForm.querySelector('button[type="submit"]').disabled = isBusy;
+}
+
+function getSignupPayload() {
+  return {
+    first_name: signupFirstNameInput.value.trim(),
+    last_name: signupLastNameInput.value.trim(),
+    user_country: signupCountryInput.value.trim(),
+    user_refferal: signupReferralInput.value
+  };
+}
+
+function resetSignupForm() {
+  signupForm.reset();
+}
+
+function getProfileSeedFromUser(user) {
+  const metadata = user?.user_metadata || {};
+  const referral = typeof metadata.user_refferal === "string" && getReferralOptions().includes(metadata.user_refferal)
+    ? metadata.user_refferal
+    : null;
+
+  return {
+    first_name: typeof metadata.first_name === "string" ? metadata.first_name.trim() || null : null,
+    last_name: typeof metadata.last_name === "string" ? metadata.last_name.trim() || null : null,
+    user_country: typeof metadata.user_country === "string" ? metadata.user_country.trim() || null : null,
+    user_refferal: referral
+  };
+}
+
+async function ensureProfileRecord(profile) {
+  if (!currentUser || profile) {
+    return profile;
+  }
+
+  const seedProfile = getProfileSeedFromUser(currentUser);
+  const hasSeedData = Object.values(seedProfile).some((value) => typeof value === "string" && value.trim());
+
+  if (!hasSeedData) {
+    return null;
+  }
+
+  const profilePayload = {
+    id: currentUser.id,
+    username: getUsernameFromUser(currentUser),
+    ...seedProfile
+  };
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .upsert(profilePayload, { onConflict: "id" })
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }
 
 function setDefaultProfileInputs() {
@@ -267,6 +370,11 @@ function resetDerivedState() {
   scoreBreakdown.innerHTML = "";
   renderIbComputedValues();
   renderALevelComputedValues();
+}
+
+function resetSignupState() {
+  currentProfile = null;
+  resetSignupForm();
 }
 
 function resetAppState() {
@@ -701,6 +809,10 @@ function collectProfilePayload() {
   return {
     id: currentUser.id,
     username: getUsernameFromUser(currentUser),
+    first_name: currentProfile?.first_name || null,
+    last_name: currentProfile?.last_name || null,
+    user_country: currentProfile?.user_country || null,
+    user_refferal: currentProfile?.user_refferal || null,
     aid_requirement: prefFinancialAid.value || null,
     campus_preference: JSON.stringify({ ranking: campusRankingOrder, vibe: prefCampusVibe.value || null }),
     size_preference: getSelectedRadioValue("class-size") || null,
@@ -1068,6 +1180,18 @@ async function loadUserData() {
     return;
   }
 
+  let resolvedProfile = profile;
+
+  try {
+    resolvedProfile = await ensureProfileRecord(profile);
+  } catch (error) {
+    setAuthStatus(error.message || "Failed to create your profile record.", true);
+    isHydratingData = false;
+    return;
+  }
+
+  currentProfile = resolvedProfile || getProfileSeedFromUser(currentUser);
+
   resetAppState();
   applyLoadedProfile(profile);
   renderCampusRanking();
@@ -1076,6 +1200,7 @@ async function loadUserData() {
   applyLoadedApplications(applications || []);
 
   isHydratingData = false;
+  updateAuthUi({ user: currentUser });
   setAuthStatus(`Signed in as ${currentUser.email}. Data loaded.`);
 }
 
@@ -1087,23 +1212,23 @@ function updateAuthUi(session) {
   document.body.classList.toggle("signed-in", isSignedIn);
   appContent.hidden = !isSignedIn;
   authShell.hidden = isSignedIn;
-  authForm.hidden = false;
   appSignoutButton.hidden = !isSignedIn;
 
   if (isSignedIn) {
     setAuthStatus(`Signed in as ${currentUser.email}.`);
   } else {
+    setAuthView("signin");
     setAuthStatus("Sign in or create an account to unlock the app.");
   }
 }
 
-async function handleAuthSubmit(mode) {
+async function handleSignInSubmit() {
   if (isAuthBusy) {
     return;
   }
 
-  const email = authEmailInput.value.trim();
-  const password = authPasswordInput.value;
+  const email = signinEmailInput.value.trim();
+  const password = signinPasswordInput.value;
 
   if (!email || !password) {
     setAuthStatus("Enter both email and password.", true);
@@ -1116,13 +1241,9 @@ async function handleAuthSubmit(mode) {
   }
 
   setAuthBusyState(true);
-  setAuthStatus(mode === "signup" ? "Creating account..." : "Signing in...");
+  setAuthStatus("Signing in...");
 
-  const action = mode === "signup"
-    ? supabase.auth.signUp({ email, password })
-    : supabase.auth.signInWithPassword({ email, password });
-
-  let { data, error } = await action;
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   setAuthBusyState(false);
 
@@ -1131,20 +1252,70 @@ async function handleAuthSubmit(mode) {
     return;
   }
 
-  authPasswordInput.value = "";
-
-  if (mode === "signup" && !data.session) {
-    setAuthStatus("Account created. Check your email to activate your account.");
-    updateAuthUi(null);
-    return;
-  }
-
-  updateAuthUi(data.session);
+  signinPasswordInput.value = "";
+  currentUser = data.session?.user ?? null;
   const universitiesLoaded = await loadUniversities();
   if (!universitiesLoaded) {
     return;
   }
   await loadUserData();
+}
+
+async function handleSignUpSubmit() {
+  if (isAuthBusy) {
+    return;
+  }
+
+  const email = signupEmailInput.value.trim();
+  const password = signupPasswordInput.value;
+  const signupProfile = getSignupPayload();
+
+  if (!email || !password || !signupProfile.first_name || !signupProfile.last_name || !signupProfile.user_country || !signupProfile.user_refferal) {
+    setAuthStatus("Complete every required field to create your account.", true);
+    return;
+  }
+
+  if (password.length < 6) {
+    setAuthStatus("Password must be at least 6 characters.", true);
+    return;
+  }
+
+  setAuthBusyState(true);
+  setAuthStatus("Creating account...");
+
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: signupProfile
+    }
+  });
+
+  setAuthBusyState(false);
+
+  const duplicateSignupAttempt = !error
+    && !data?.session
+    && Array.isArray(data?.user?.identities)
+    && data.user.identities.length === 0;
+
+  if (error || duplicateSignupAttempt) {
+    const normalizedMessage = (error?.message || '').toLowerCase();
+    const isTaken = duplicateSignupAttempt
+      || normalizedMessage.includes('already registered')
+      || normalizedMessage.includes('already been registered')
+      || normalizedMessage.includes('user already registered');
+
+    setAuthStatus(isTaken ? 'Email is taken.' : (error?.message || 'Unable to create account.'), true);
+    return;
+  }
+
+  currentProfile = {
+    username: email.split("@")[0] || "student",
+    ...signupProfile
+  };
+  resetSignupForm();
+  setAuthView("signin");
+  setAuthStatus("Check your email to activate your account.");
 }
 
 async function handleSignOut() {
@@ -1161,7 +1332,8 @@ async function handleSignOut() {
     return;
   }
 
-  authForm.reset();
+  signinForm.reset();
+  resetSignupState();
   resetAppState();
   updateAuthUi(null);
 }
@@ -1177,23 +1349,28 @@ async function initializeAuth() {
     return;
   }
 
-  updateAuthUi(data.session);
+  resetSignupState();
   if (data.session) {
+    currentUser = data.session.user;
     const universitiesLoaded = await loadUniversities();
     if (!universitiesLoaded) {
       return;
     }
     await loadUserData();
+  } else {
+    updateAuthUi(null);
   }
 
   supabase.auth.onAuthStateChange(async (_event, session) => {
-    updateAuthUi(session);
     if (session) {
+      currentUser = session.user;
       const universitiesLoaded = await loadUniversities();
       if (!universitiesLoaded) {
         return;
       }
       await loadUserData();
+    } else {
+      updateAuthUi(null);
     }
   });
 }
@@ -2472,15 +2649,24 @@ function populateTaskForm(task) {
 }
 
 
-authForm.addEventListener("submit", async (event) => {
+signinForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  authMode = "signin";
-  await handleAuthSubmit(authMode);
+  await handleSignInSubmit();
 });
 
-authSignupButton.addEventListener("click", async () => {
-  authMode = "signup";
-  await handleAuthSubmit(authMode);
+signupForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await handleSignUpSubmit();
+});
+
+authTabSignin.addEventListener("click", () => {
+  setAuthView("signin");
+  setAuthStatus("Sign in or create an account to unlock the app.");
+});
+
+authTabSignup.addEventListener("click", () => {
+  setAuthView("signup");
+  setAuthStatus("Create your account to get started.");
 });
 
 appSignoutButton.addEventListener("click", handleSignOut);

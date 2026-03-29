@@ -1029,6 +1029,138 @@ body.signed-out .auth-shell {
   color: #9f2d2d;
 }
 
+.auth-mode-toggle {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 6px;
+  margin-bottom: 18px;
+  border-radius: 999px;
+  background: rgba(240, 229, 212, 0.75);
+}
+
+.auth-mode-button {
+  color: var(--accent-dark);
+  background: transparent;
+}
+
+.auth-mode-button-active {
+  color: #fffaf4;
+  background: var(--accent);
+}
+
+.auth-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: end;
+}
+
+.auth-form[hidden] {
+  display: none;
+}
+
+.auth-form-signup {
+  align-items: start;
+}
+
+.auth-field-full {
+  grid-column: 1 / -1;
+}
+
+.auth-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.auth-actions-full {
+  grid-column: 1 / -1;
+}
+
+.auth-actions button {
+  min-width: 172px;
+  justify-content: center;
+}
+
+#app-content[hidden] {
+  display: none;
+}
+
+#auth-shell[hidden] {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    width: min(100% - 20px, 1080px);
+    padding-top: 24px;
+  }
+
+  .form-grid,
+  .subject-row,
+  .activity-row,
+  .university-list,
+  .planner-list-wide,
+  .planner-controls,
+  .planner-controls-wide,
+  .ib-core-grid,
+  .a-level-score-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .task-sort-field {
+    min-width: 100%;
+  }
+
+  .profile-actions,
+  .result-card,
+  .task-card-top,
+  .status-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .task-side,
+  .task-meta {
+    justify-items: stretch;
+    justify-content: flex-start;
+  }
+
+  .score-display {
+    text-align: left;
+  }
+}
+
+.auth-shell {
+  margin-bottom: 22px;
+}
+
+body.signed-out .auth-shell {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.auth-shell-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.auth-eyebrow {
+  margin-bottom: 6px;
+}
+
+.auth-status {
+  margin: 10px 0 0;
+}
+
+.auth-status-error {
+  color: #9f2d2d;
+}
+
 .auth-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1055,6 +1187,8 @@ body.signed-out .auth-shell {
   display: none;
 }
 
+
+
 @media (max-width: 760px) {
   .auth-shell-top {
     flex-direction: column;
@@ -1062,6 +1196,10 @@ body.signed-out .auth-shell {
 
   .auth-form {
     grid-template-columns: 1fr;
+  }
+
+  .auth-mode-toggle {
+    width: 100%;
   }
 
   .auth-actions {
