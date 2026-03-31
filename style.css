@@ -1219,6 +1219,12 @@ body.signed-out .auth-shell {
   justify-content: flex-end;
 }
 
+.section-actions-top {
+  margin-top: 0;
+  margin-bottom: 18px;
+}
+
+
 
 .test-score-group {
   display: grid;

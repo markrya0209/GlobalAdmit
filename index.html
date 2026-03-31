@@ -560,6 +560,10 @@
             Build one Early Decision option, any number of eligible Early Action choices, and as many Regular Decision schools as you want.
           </p>
 
+          <div class="section-actions section-actions-top">
+            <button id="save-applications-button" type="button">Save Applications</button>
+          </div>
+
           <div class="planner-grid">
             <section class="subsection">
               <div class="subsection-header">
@@ -569,6 +573,14 @@
                 <label class="field planner-control-field">
                   <span>Search universities</span>
                   <input id="planner-ed-search" type="search" placeholder="Search Early Decision universities" />
+                </label>
+                <label class="field planner-control-field">
+                  <span>Show</span>
+                  <select id="planner-ed-show">
+                    <option value="all">All Universities</option>
+                    <option value="selected">Universities selected by me</option>
+                    <option value="unselected">Universities not selected by me</option>
+                  </select>
                 </label>
                 <label class="field planner-control-field">
                   <span>Sort by</span>
@@ -599,6 +611,14 @@
                 <label class="field planner-control-field">
                   <span>Search universities</span>
                   <input id="planner-ea-search" type="search" placeholder="Search Early Action universities" />
+                </label>
+                <label class="field planner-control-field">
+                  <span>Show</span>
+                  <select id="planner-ea-show">
+                    <option value="all">All Universities</option>
+                    <option value="selected">Universities selected by me</option>
+                    <option value="unselected">Universities not selected by me</option>
+                  </select>
                 </label>
                 <label class="field planner-control-field">
                   <span>Sort by</span>
@@ -632,6 +652,14 @@
                 <input id="planner-rd-search" type="search" placeholder="Search Regular Decision universities" />
               </label>
               <label class="field planner-control-field">
+                <span>Show</span>
+                <select id="planner-rd-show">
+                  <option value="all">All Universities</option>
+                  <option value="selected">Universities selected by me</option>
+                  <option value="unselected">Universities not selected by me</option>
+                </select>
+              </label>
+              <label class="field planner-control-field">
                 <span>Sort by</span>
                 <select id="planner-rd-sort-field">
                   <option value="fit">Fit score</option>
@@ -649,9 +677,7 @@
             <div id="planner-rd-list" class="planner-list planner-list-wide"></div>
           </section>
 
-          <div class="section-actions">
-            <button id="save-applications-button" type="button">Save Applications</button>
-          </div>
+          
         </section>
 
       </section>

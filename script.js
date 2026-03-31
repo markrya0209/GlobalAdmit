@@ -164,6 +164,9 @@ const plannerRdList = document.getElementById("planner-rd-list");
 const plannerEdSearch = document.getElementById("planner-ed-search");
 const plannerEaSearch = document.getElementById("planner-ea-search");
 const plannerRdSearch = document.getElementById("planner-rd-search");
+const plannerEdShowFilter = document.getElementById("planner-ed-show");
+const plannerEaShowFilter = document.getElementById("planner-ea-show");
+const plannerRdShowFilter = document.getElementById("planner-rd-show");
 const plannerEdSortField = document.getElementById("planner-ed-sort-field");
 const plannerEaSortField = document.getElementById("planner-ea-sort-field");
 const plannerRdSortField = document.getElementById("planner-rd-sort-field");
@@ -204,9 +207,9 @@ let currentAcademicScore = null;
 let campusRankingOrder = ["Rural", "Urban", "Suburban"];
 let selectedPlannerEd = "";
 const plannerViewState = {
-  ed: { search: "", sortField: "fit", sortDirection: "desc" },
-  ea: { search: "", sortField: "fit", sortDirection: "desc" },
-  rd: { search: "", sortField: "fit", sortDirection: "desc" }
+  ed: { search: "", show: "all", sortField: "fit", sortDirection: "desc" },
+  ea: { search: "", show: "all", sortField: "fit", sortDirection: "desc" },
+  rd: { search: "", show: "all", sortField: "fit", sortDirection: "desc" }
 };
 const selectedPlannerEa = new Set();
 const selectedPlannerRd = new Set();
@@ -1944,7 +1947,28 @@ function filterAndSortPlannerSchools(schools, roundKey) {
   const direction = viewState.sortDirection === "asc" ? 1 : -1;
 
   return schools
-    .filter((school) => !searchTerm || school.name.toLowerCase().includes(searchTerm))
+    .filter((school) => {
+      const matchesSearch = !searchTerm || school.name.toLowerCase().includes(searchTerm);
+      if (!matchesSearch) {
+        return false;
+      }
+
+      const isSelected = roundKey === "ed"
+        ? selectedPlannerEd === school.name
+        : roundKey === "ea"
+          ? selectedPlannerEa.has(school.name)
+          : selectedPlannerRd.has(school.name);
+
+      if (viewState.show === "selected") {
+        return isSelected;
+      }
+
+      if (viewState.show === "unselected") {
+        return !isSelected;
+      }
+
+      return true;
+    })
     .slice()
     .sort((a, b) => {
       if (viewState.sortField === "category") {
@@ -2768,6 +2792,9 @@ plannerRdList.addEventListener("change", (event) => {
   [plannerEdSearch, "ed", "search"],
   [plannerEaSearch, "ea", "search"],
   [plannerRdSearch, "rd", "search"],
+  [plannerEdShowFilter, "ed", "show"],
+  [plannerEaShowFilter, "ea", "show"],
+  [plannerRdShowFilter, "rd", "show"],
   [plannerEdSortField, "ed", "sortField"],
   [plannerEaSortField, "ea", "sortField"],
   [plannerRdSortField, "rd", "sortField"],
