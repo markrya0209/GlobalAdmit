@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GlobalAdmit | Dashboard</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="./dashboard.js"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <div id="app-content" class="app-content" hidden>
+        <header class="masthead card">
+          <div class="masthead-top">
+            <div class="brand-lockup">
+              <p class="brand-kicker">GlobalAdmit</p>
+              <div>
+                <h2 class="brand-name">International admissions command center</h2>
+                <p class="brand-note">
+                  One workspace for profile scoring, university fit, round planning, application outcomes, and
+                  deadline execution.
+                </p>
+              </div>
+            </div>
+
+            <div class="masthead-actions">
+              <p id="app-session-status" class="helper-text app-session-status" aria-live="polite">Signed in.</p>
+              <button id="app-signout-button" type="button" class="secondary-button" hidden>Sign out</button>
+            </div>
+          </div>
+
+          <div class="masthead-body">
+            <div class="hero-copy">
+              <p id="hero-page-label" class="eyebrow">Profile Scorer</p>
+              <h1 id="hero-page-title">Build a clear picture of your admissions profile</h1>
+              <p id="hero-page-description" class="subtitle">
+                Translate your IGCSE or GCSE results, IB or A-Levels, testing, and activities into a structured view
+                you can use across the rest of the admissions process.
+              </p>
+            </div>
+
+            <div class="hero-side-note">
+              <p class="hero-side-label">Built for families and focused applicants</p>
+              <p class="hero-side-copy">
+                Every section is designed to reduce ambiguity and keep the admissions process organized from first
+                shortlist to final submission.
+              </p>
+            </div>
+          </div>
+
+          <div class="overview-strip" aria-label="Workspace overview">
+            <article class="overview-card">
+              <span class="overview-label">Current ProfileScore</span>
+              <strong id="hero-profile-overview">Awaiting calculation</strong>
+            </article>
+
+            <article class="overview-card">
+              <span class="overview-label">Selected Applications</span>
+              <strong id="hero-application-overview">0 selected</strong>
+            </article>
+
+            <article class="overview-card">
+              <span class="overview-label">Open Tasks</span>
+              <strong id="hero-task-overview">No tasks</strong>
+            </article>
+
+            <article class="overview-card">
+              <span class="overview-label">Next Deadline</span>
+              <strong id="hero-deadline-overview">Not set</strong>
+            </article>
+          </div>
+        </header>
+
+        <nav class="top-nav card" aria-label="Primary" role="tablist">
+          <button
+            id="nav-scorer"
+            class="nav-button nav-button-active"
+            type="button"
+            role="tab"
+            aria-controls="page-scorer"
+            aria-selected="true"
+          >
+            <span class="nav-button-label">Profile Scorer</span>
+            <span class="nav-button-meta">Academic and extracurricular scoring</span>
+          </button>
+
+          <button
+            id="nav-questionnaire"
+            class="nav-button"
+            type="button"
+            role="tab"
+            aria-controls="page-questionnaire"
+            aria-selected="false"
+            tabindex="-1"
+          >
+            <span class="nav-button-label">Preferences</span>
+            <span class="nav-button-meta">Campus, classroom, and aid priorities</span>
+          </button>
+
+          <button
+            id="nav-planner"
+            class="nav-button"
+            type="button"
+            role="tab"
+            aria-controls="page-planner"
+            aria-selected="false"
+            tabindex="-1"
+          >
+            <span class="nav-button-label">Application Planner</span>
+            <span class="nav-button-meta">ED, EA, and RD round selection</span>
+          </button>
+
+          <button
+            id="nav-statuses"
+            class="nav-button"
+            type="button"
+            role="tab"
+            aria-controls="page-statuses"
+            aria-selected="false"
+            tabindex="-1"
+          >
+            <span class="nav-button-label">Application Statuses</span>
+            <span class="nav-button-meta">Track each selected university</span>
+          </button>
+
+          <button
+            id="nav-tasks"
+            class="nav-button"
+            type="button"
+            role="tab"
+            aria-controls="page-tasks"
+            aria-selected="false"
+            tabindex="-1"
+          >
+            <span class="nav-button-label">Task Manager</span>
+            <span class="nav-button-meta">Deadlines, priorities, and completion</span>
+          </button>
+        </nav>
+
+        <section id="page-scorer" class="page-view page-view-active" role="tabpanel" aria-labelledby="nav-scorer">
+          <div class="workspace-grid workspace-grid-scorer">
+            <section class="card">
+              <div class="section-heading">
+                <span class="section-number">01</span>
+                <div>
+                  <h2>Profile Scorer</h2>
+                  <p class="page-intro">
+                    Enter the academic and extracurricular inputs that shape your GlobalAdmit profile assessment.
+                  </p>
+                </div>
+              </div>
+
+              <div class="profile-stack">
+                <section class="subsection">
+                  <div class="subsection-header">
+                    <div>
+                      <h3>IGCSE / GCSE subjects</h3>
+                      <p class="subsection-copy">Add the subjects that best reflect your current academic foundation.</p>
+                    </div>
+                    <button id="add-subject-button" type="button" class="secondary-button">Add subject</button>
+                  </div>
+
+                  <div id="igcse-subjects" class="subjects-list"></div>
+                  <p class="helper-text">Grades follow the A* to G scale and are averaged into the IGCSE or GCSE GPA.</p>
+                </section>
+
+                <section class="subsection">
+                  <div class="subsection-header">
+                    <div>
+                      <h3>Senior-year curriculum</h3>
+                      <p class="subsection-copy">Choose the curriculum GlobalAdmit should use for grades 11 and 12.</p>
+                    </div>
+                  </div>
+
+                  <label class="field curriculum-field">
+                    <span>Choose your curriculum</span>
+                    <select id="curriculum-type">
+                      <option value="ib">IB</option>
+                      <option value="a_levels">A-Levels</option>
+                    </select>
+                  </label>
+                </section>
+
+                <div class="academic-track-grid">
+                  <section id="ib-section" class="subsection academic-section">
+                    <div class="subsection-header">
+                      <div>
+                        <h3>IB subjects</h3>
+                        <p class="subsection-copy">Complete all 3 Higher Level and 3 Standard Level entries.</p>
+                      </div>
+                    </div>
+
+                    <div class="subject-group">
+                      <h4>Higher Level</h4>
+                      <div id="ib-hl-subjects" class="subjects-list"></div>
+                    </div>
+
+                    <div class="subject-group">
+                      <h4>Standard Level</h4>
+                      <div id="ib-sl-subjects" class="subjects-list ib-subsection-gap"></div>
+                    </div>
+
+                    <div class="metrics-grid">
+                      <label class="field">
+                        <span>TOK grade</span>
+                        <select id="ib-tok-grade">
+                          <option value="">Select</option>
+                          <option value="A">A</option>
+                          <option value="B">B</option>
+                          <option value="C">C</option>
+                          <option value="D">D</option>
+                          <option value="E">E</option>
+                        </select>
+                      </label>
+
+                      <label class="field">
+                        <span>EE grade</span>
+                        <select id="ib-ee-grade">
+                          <option value="">Select</option>
+                          <option value="A">A</option>
+                          <option value="B">B</option>
+                          <option value="C">C</option>
+                          <option value="D">D</option>
+                          <option value="E">E</option>
+                        </select>
+                      </label>
+
+                      <div class="score-display metric-display">
+                        <span class="score-label">IB Core / 3</span>
+                        <strong id="ib-core-score-value">Not calculated yet</strong>
+                      </div>
+
+                      <div class="score-display metric-display">
+                        <span class="score-label">IB Total / 45</span>
+                        <strong id="ib-total-score-value">Not calculated yet</strong>
+                      </div>
+
+                      <div class="score-display metric-display">
+                        <span class="score-label">Course Rigor / 10</span>
+                        <strong id="ib-course-rigor-value">Not calculated yet</strong>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section id="a-levels-section" class="subsection academic-section" hidden>
+                    <div class="subsection-header">
+                      <div>
+                        <h3>A-Level subjects</h3>
+                        <p class="subsection-copy">Complete all 3 subjects to calculate GPA and rigor.</p>
+                      </div>
+                    </div>
+
+                    <div id="a-level-subjects" class="subjects-list"></div>
+
+                    <div class="metrics-grid metrics-grid-compact">
+                      <div class="score-display metric-display">
+                        <span class="score-label">A-Level GPA / 4.0</span>
+                        <strong id="a-level-gpa-value">Not calculated yet</strong>
+                      </div>
+
+                      <div class="score-display metric-display">
+                        <span class="score-label">Course Rigor / 10</span>
+                        <strong id="a-level-course-rigor-value">Not calculated yet</strong>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <section class="subsection">
+                  <div class="subsection-header">
+                    <div>
+                      <h3>Testing</h3>
+                      <p class="subsection-copy">Include your strongest testing context or apply test optional.</p>
+                    </div>
+                  </div>
+
+                  <div class="form-grid form-grid-testing">
+                    <div class="field checkbox-field test-optional-field">
+                      <span>Testing policy</span>
+                      <label class="checkbox-inline">
+                        <input id="test-optional" type="checkbox" />
+                        <span>Applying test optional</span>
+                      </label>
+                      <span class="helper-text">
+                        If selected, SAT and ACT are disabled and the grades-based academic score is used twice.
+                      </span>
+                    </div>
+
+                    <div class="test-score-group">
+                      <label class="field">
+                        <span>SAT score (400-1600)</span>
+                        <input
+                          id="sat-score"
+                          type="number"
+                          min="400"
+                          max="1600"
+                          step="10"
+                          placeholder="e.g. 1450"
+                        />
+                      </label>
+
+                      <label class="field">
+                        <span>ACT score (1-36)</span>
+                        <input id="act-score" type="number" min="1" max="36" step="1" placeholder="e.g. 33" />
+                      </label>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="subsection">
+                  <div class="subsection-header">
+                    <div>
+                      <h3>Extracurricular activities</h3>
+                      <p class="subsection-copy">Capture leadership, initiative, and impact across up to 10 activities.</p>
+                    </div>
+                  </div>
+
+                  <div id="extracurricular-activities" class="activities-list"></div>
+                  <p class="helper-text">
+                    Activity impact scores inform the extracurricular component of your overall ProfileScore.
+                  </p>
+                </section>
+              </div>
+            </section>
+
+            <aside class="workspace-sidebar">
+              <section class="card score-panel">
+                <div class="section-heading section-heading-compact">
+                  <span class="section-number">02</span>
+                  <div>
+                    <h2>Score Snapshot</h2>
+                    <p class="page-intro">Use this summary as you refine your inputs.</p>
+                  </div>
+                </div>
+
+                <div class="score-display score-display-primary">
+                  <span class="score-label">GlobalAdmit ProfileScore</span>
+                  <strong id="profile-score-value">Not calculated yet</strong>
+                </div>
+
+                <p id="profile-message" class="helper-text">
+                  Enter your academic record and activities to calculate your GlobalAdmit profile.
+                </p>
+
+                <button id="calculate-button" type="button">Calculate score</button>
+              </section>
+
+              <section class="card note-panel">
+                <div class="section-heading section-heading-compact">
+                  <span class="section-number">03</span>
+                  <div>
+                    <h2>What This Score Uses</h2>
+                  </div>
+                </div>
+
+                <ul class="guidance-list">
+                  <li>IGCSE or GCSE performance combined with IB or A-Level rigor.</li>
+                  <li>SAT or ACT scores unless you apply test optional.</li>
+                  <li>Extracurricular breadth and impact across your activities.</li>
+                  <li>Automatic fit and category context inside the application planner after calculation.</li>
+                </ul>
+              </section>
+            </aside>
+          </div>
+
+          <div id="score-breakdown" class="card breakdown-card" hidden></div>
+        </section>
+
+        <section
+          id="page-questionnaire"
+          class="page-view"
+          role="tabpanel"
+          aria-labelledby="nav-questionnaire"
+          hidden
+        >
+          <div class="workspace-grid workspace-grid-preferences">
+            <section class="card">
+              <div class="page-card-header">
+                <div class="section-heading">
+                  <span class="section-number">04</span>
+                  <div>
+                    <h2>Preferences</h2>
+                    <p class="page-intro">
+                      Clarify the financial, campus, and classroom environment that suits your application strategy.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="section-actions section-actions-inline">
+                  <button id="save-preferences-button" type="button">Save preferences</button>
+                </div>
+              </div>
+
+              <div class="preference-grid">
+                <label class="field">
+                  <span>Financial aid need</span>
+                  <select id="pref-financial-aid">
+                    <option value="">Select one</option>
+                    <option value="Needs full financial aid">Needs full financial aid</option>
+                    <option value="Needs some financial aid">Needs some financial aid</option>
+                    <option value="Needs no financial aid">Needs no financial aid</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Climate preference</span>
+                  <select id="pref-climate">
+                    <option value="">Select one</option>
+                    <option value="no_preference">No Preference</option>
+                    <option value="1">Cold / Snowy</option>
+                    <option value="2">Mild / Mixed</option>
+                    <option value="3">Warm year-round</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Campus vibe preference</span>
+                  <select id="pref-campus-vibe">
+                    <option value="">Select one</option>
+                    <option value="no_preference">No Preference</option>
+                    <option value="1">Highly Competitive and Intense</option>
+                    <option value="2">Balanced</option>
+                    <option value="3">Collaborative and relaxed</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Social scene preference</span>
+                  <select id="pref-social-scene">
+                    <option value="">Select one</option>
+                    <option value="no_preference">No Preference</option>
+                    <option value="1">Party-heavy</option>
+                    <option value="2">Balanced</option>
+                    <option value="3">Quiet / Academic-focused</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Class style preference</span>
+                  <select id="pref-class-style">
+                    <option value="">Select one</option>
+                    <option value="no_preference">No Preference</option>
+                    <option value="1">Lecture-based</option>
+                    <option value="2">Discussion-based</option>
+                    <option value="3">Project-based</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="preference-detail-grid">
+                <section class="subsection">
+                  <div class="subsection-header">
+                    <div>
+                      <h3>Campus type ranking</h3>
+                      <p class="subsection-copy">Drag to reorder from most preferred to least preferred.</p>
+                    </div>
+                  </div>
+                  <div id="campus-ranking" class="ranking-list" aria-label="Campus type ranking"></div>
+                </section>
+
+                <fieldset class="subsection option-group">
+                  <legend>Class size preference</legend>
+                  <label class="choice-row">
+                    <input type="radio" name="class-size" value="Small (<5k)" />
+                    <span>Small (&lt;5k)</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="radio" name="class-size" value="Medium (5k-15k)" />
+                    <span>Medium (5k-15k)</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="radio" name="class-size" value="Large (>15k)" />
+                    <span>Large (&gt;15k)</span>
+                  </label>
+                </fieldset>
+              </div>
+            </section>
+
+            <aside class="workspace-sidebar">
+              <section class="card">
+                <div class="section-heading section-heading-compact">
+                  <span class="section-number">05</span>
+                  <div>
+                    <h2>Preference Summary</h2>
+                    <p class="page-intro">Planner fit scores update from these saved choices.</p>
+                  </div>
+                </div>
+
+                <div id="questionnaire-summary" class="results-empty">
+                  Complete your preferences to start generating fit context in the planner.
+                </div>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <section id="page-planner" class="page-view" role="tabpanel" aria-labelledby="nav-planner" hidden>
+          <section class="card page-banner">
+            <div class="page-card-header">
+              <div class="section-heading">
+                <span class="section-number">06</span>
+                <div>
+                  <h2>Application Planner</h2>
+                  <p class="page-intro">
+                    Build your round strategy with fit context, difficulty categories, and test-optional eligibility in
+                    view.
+                  </p>
+                </div>
+              </div>
+
+              <div class="section-actions section-actions-inline">
+                <button id="save-applications-button" type="button">Save application plan</button>
+              </div>
+            </div>
+          </section>
+
+          <div class="planner-board">
+            <section class="card planner-round-card">
+              <div class="planner-round-header">
+                <div>
+                  <h3 class="heading-ed">Early Decision</h3>
+                  <p class="subsection-copy">Choose one binding ED option if it fits your strategy.</p>
+                </div>
+              </div>
+
+              <div class="planner-controls">
+                <label class="field planner-control-field">
+                  <span>Search universities</span>
+                  <input id="planner-ed-search" type="search" placeholder="Search Early Decision universities" />
+                </label>
+
+                <label class="field planner-control-field">
+                  <span>Sort by</span>
+                  <select id="planner-ed-sort-field">
+                    <option value="fit">Fit score</option>
+                    <option value="category">Difficulty category</option>
+                  </select>
+                </label>
+
+                <label class="field planner-control-field">
+                  <span>Order</span>
+                  <select id="planner-ed-sort-direction">
+                    <option value="desc">Descending</option>
+                    <option value="asc">Ascending</option>
+                  </select>
+                </label>
+              </div>
+
+              <div id="planner-ed-list" class="planner-list"></div>
+              <p class="helper-text board-note">Only one binding Early Decision university can be selected at a time.</p>
+            </section>
+
+            <section class="card planner-round-card">
+              <div class="planner-round-header">
+                <div>
+                  <h3 class="heading-ea">Early Action</h3>
+                  <p class="subsection-copy">Build your non-binding early round with fit and category context.</p>
+                </div>
+              </div>
+
+              <div class="planner-controls">
+                <label class="field planner-control-field">
+                  <span>Search universities</span>
+                  <input id="planner-ea-search" type="search" placeholder="Search Early Action universities" />
+                </label>
+
+                <label class="field planner-control-field">
+                  <span>Sort by</span>
+                  <select id="planner-ea-sort-field">
+                    <option value="fit">Fit score</option>
+                    <option value="category">Difficulty category</option>
+                  </select>
+                </label>
+
+                <label class="field planner-control-field">
+                  <span>Order</span>
+                  <select id="planner-ea-sort-direction">
+                    <option value="desc">Descending</option>
+                    <option value="asc">Ascending</option>
+                  </select>
+                </label>
+              </div>
+
+              <div id="planner-ea-list" class="planner-list"></div>
+              <p class="helper-text board-note">Schools with restrictive early policies remain excluded from this list.</p>
+            </section>
+
+            <section class="card planner-round-card">
+              <div class="planner-round-header">
+                <div>
+                  <h3 class="heading-rd">Regular Decision</h3>
+                  <p class="subsection-copy">Use RD to round out the final application portfolio.</p>
+                </div>
+              </div>
+
+              <div class="planner-controls">
+                <label class="field planner-control-field">
+                  <span>Search universities</span>
+                  <input id="planner-rd-search" type="search" placeholder="Search Regular Decision universities" />
+                </label>
+
+                <label class="field planner-control-field">
+                  <span>Sort by</span>
+                  <select id="planner-rd-sort-field">
+                    <option value="fit">Fit score</option>
+                    <option value="category">Difficulty category</option>
+                  </select>
+                </label>
+
+                <label class="field planner-control-field">
+                  <span>Order</span>
+                  <select id="planner-rd-sort-direction">
+                    <option value="desc">Descending</option>
+                    <option value="asc">Ascending</option>
+                  </select>
+                </label>
+              </div>
+
+              <div id="planner-rd-list" class="planner-list planner-list-wide"></div>
+              <p class="helper-text board-note">Regular Decision selections stay coordinated with your early-round choices.</p>
+            </section>
+          </div>
+        </section>
+
+        <section id="page-statuses" class="page-view" role="tabpanel" aria-labelledby="nav-statuses" hidden>
+          <section class="card page-banner">
+            <div class="section-heading">
+              <span class="section-number">07</span>
+              <div>
+                <h2>Application Statuses</h2>
+                <p class="page-intro">
+                  Track the live status of every selected application. New selections default to Working on
+                  Application.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <div class="status-board">
+            <section class="card status-column">
+              <div class="planner-round-header">
+                <div>
+                  <h3 class="heading-ed">Early Decision</h3>
+                  <p class="subsection-copy">Update outcomes as decisions arrive.</p>
+                </div>
+              </div>
+              <div id="statuses-ed-list" class="status-list results-empty">No Early Decision applications selected.</div>
+            </section>
+
+            <section class="card status-column">
+              <div class="planner-round-header">
+                <div>
+                  <h3 class="heading-ea">Early Action</h3>
+                  <p class="subsection-copy">Track every active early action file in one column.</p>
+                </div>
+              </div>
+              <div id="statuses-ea-list" class="status-list results-empty">No Early Action applications selected.</div>
+            </section>
+
+            <section class="card status-column">
+              <div class="planner-round-header">
+                <div>
+                  <h3 class="heading-rd">Regular Decision</h3>
+                  <p class="subsection-copy">Keep your broader RD portfolio organized through final decisions.</p>
+                </div>
+              </div>
+              <div id="statuses-rd-list" class="status-list results-empty">No Regular Decision applications selected.</div>
+            </section>
+          </div>
+        </section>
+
+        <section id="page-tasks" class="page-view" role="tabpanel" aria-labelledby="nav-tasks" hidden>
+          <div class="workspace-grid workspace-grid-tasks">
+            <section class="card">
+              <div class="section-heading">
+                <span class="section-number">08</span>
+                <div>
+                  <h2>Task Manager</h2>
+                  <p class="page-intro">
+                    Add, edit, and prioritize the work required to keep each application moving forward.
+                  </p>
+                </div>
+              </div>
+
+              <form id="task-form" class="task-form">
+                <div class="form-grid task-form-grid">
+                  <label class="field">
+                    <span>Task title</span>
+                    <input id="task-title" type="text" placeholder="e.g. Draft Common App essay" />
+                  </label>
+
+                  <label class="field">
+                    <span>Type</span>
+                    <select id="task-type">
+                      <option value="">Select a type</option>
+                      <option value="Standardized Test">Standardized Test</option>
+                      <option value="School Exam">School Exam</option>
+                      <option value="Extracurricular">Extracurricular</option>
+                      <option value="Essay">Essay</option>
+                      <option value="Financial Aid Logistics">Financial Aid Logistics</option>
+                    </select>
+                  </label>
+
+                  <label class="field">
+                    <span>Date</span>
+                    <input id="task-date" type="date" />
+                  </label>
+
+                  <label class="field">
+                    <span>Priority score (1-10)</span>
+                    <input id="task-priority" type="number" min="1" max="10" step="1" placeholder="e.g. 8" />
+                  </label>
+
+                  <label class="field">
+                    <span>Hours required</span>
+                    <input id="task-hours" type="number" min="0" step="0.5" placeholder="e.g. 4" />
+                  </label>
+
+                  <label class="field checkbox-field">
+                    <span>Completed</span>
+                    <input id="task-completed" type="checkbox" />
+                  </label>
+                </div>
+
+                <div class="selection-toolbar">
+                  <button id="task-save-button" type="submit">Add task</button>
+                  <button id="task-cancel-button" type="button" class="secondary-button" hidden>Cancel edit</button>
+                </div>
+              </form>
+            </section>
+
+            <section class="card">
+              <div class="section-heading">
+                <span class="section-number">09</span>
+                <div>
+                  <h2>Tasks</h2>
+                  <p class="page-intro">Filter by urgency and sort by the dimension that matters most right now.</p>
+                </div>
+              </div>
+
+              <div class="task-filter-bar" role="tablist" aria-label="Task views">
+                <button id="task-filter-upcoming" class="filter-button filter-button-active" type="button">Upcoming</button>
+                <button id="task-filter-overdue" class="filter-button" type="button">Overdue</button>
+                <button id="task-filter-completed" class="filter-button" type="button">Completed</button>
+                <button id="task-filter-all" class="filter-button" type="button">All</button>
+              </div>
+
+              <div class="task-sort-bar">
+                <label class="field task-sort-field">
+                  <span>Sort tasks by</span>
+                  <select id="task-sort-field">
+                    <option value="date">Date</option>
+                    <option value="priority">Priority score</option>
+                    <option value="hours">Hours required</option>
+                  </select>
+                </label>
+
+                <label class="field task-sort-field">
+                  <span>Order</span>
+                  <select id="task-sort-direction">
+                    <option value="asc">Ascending</option>
+                    <option value="desc">Descending</option>
+                  </select>
+                </label>
+              </div>
+
+              <div id="task-list" class="task-list results-empty">Add your first task to get started.</div>
+            </section>
+          </div>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

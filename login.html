@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GlobalAdmit | Log In</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="./login.js"></script>
+  </head>
+  <body class="public-body">
+    <main class="public-shell">
+      <header class="public-header">
+        <a class="public-brand" href="index.html" aria-label="GlobalAdmit home">
+          <span class="public-brand-mark">GA</span>
+          <span>GlobalAdmit</span>
+        </a>
+
+        <nav class="public-nav" aria-label="Primary">
+          <a class="public-nav-link" href="index.html">The Product</a>
+          <a class="public-nav-link" href="about.html">About Us</a>
+          <a class="public-nav-link is-active" href="login.html" aria-current="page">Log In</a>
+        </nav>
+      </header>
+
+      <section class="login-layout">
+        <div class="login-context">
+          <p class="eyebrow">Account Access</p>
+          <h1>Enter your admissions dashboard.</h1>
+          <p class="subtitle">
+            Sign in to access profile scoring, preferences, application planning, statuses, and task management.
+          </p>
+        </div>
+
+        <section class="login-page-card card" aria-label="Authentication">
+          <div class="auth-shell-top">
+            <div>
+              <p id="auth-status" class="helper-text auth-status" aria-live="polite">Checking session...</p>
+            </div>
+          </div>
+
+          <div class="auth-toggle" role="tablist" aria-label="Authentication mode">
+            <button
+              id="signin-toggle"
+              class="auth-toggle-button is-active"
+              type="button"
+              role="tab"
+              aria-selected="true"
+            >
+              Sign in
+            </button>
+            <button
+              id="signup-toggle"
+              class="auth-toggle-button"
+              type="button"
+              role="tab"
+              aria-selected="false"
+            >
+              Create account
+            </button>
+          </div>
+
+          <form id="auth-form" class="auth-form auth-form-stacked">
+            <label class="field">
+              <span>School or personal email</span>
+              <input id="auth-email" type="email" placeholder="you@example.edu" autocomplete="email" required />
+            </label>
+
+            <label class="field">
+              <span>Password</span>
+              <input
+                id="auth-password"
+                type="password"
+                placeholder="Enter password"
+                autocomplete="current-password"
+                minlength="6"
+                required
+              />
+            </label>
+
+            <p id="auth-helper" class="login-helper-text">
+              Use your existing GlobalAdmit account to access your admissions dashboard.
+            </p>
+
+            <label id="signup-consent" class="signup-consent" hidden>
+              <input id="signup-agree" type="checkbox" />
+              <span>
+                I agree to the
+                <a href="terms.html" target="_blank" rel="noopener noreferrer">Terms &amp; Conditions</a>
+                and
+                <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
+              </span>
+            </label>
+
+            <div class="auth-actions auth-actions-stacked">
+              <button id="auth-submit-button" type="submit">Log in</button>
+            </div>
+          </form>
+
+          <div class="login-divider" aria-hidden="true">
+            <span></span>
+            <p>or</p>
+            <span></span>
+          </div>
+
+          <button id="google-auth-button" class="google-auth-button" type="button">
+            <img src="./assets/google-logo-placeholder.svg" alt="" />
+            <span>Continue with Google</span>
+          </button>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

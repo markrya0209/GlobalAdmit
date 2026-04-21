@@ -274,8 +274,10 @@ function syncTestingInputs() {
 }
 
 function setAuthStatus(message, isError = false) {
-  authStatus.textContent = message;
-  authStatus.classList.toggle("auth-status-error", isError);
+  if (authStatus) {
+    authStatus.textContent = message;
+    authStatus.classList.toggle("auth-status-error", isError);
+  }
   if (appSessionStatus) {
     appSessionStatus.textContent = message;
     appSessionStatus.classList.toggle("auth-status-error", isError);
@@ -336,11 +338,12 @@ function updateOverviewMetrics() {
 
 function setAuthBusyState(isBusy) {
   isAuthBusy = isBusy;
-  authEmailInput.disabled = isBusy;
-  authPasswordInput.disabled = isBusy;
-  authSignupButton.disabled = isBusy;
-  appSignoutButton.disabled = isBusy;
-  authForm.querySelector('button[type="submit"]').disabled = isBusy;
+  if (authEmailInput) authEmailInput.disabled = isBusy;
+  if (authPasswordInput) authPasswordInput.disabled = isBusy;
+  if (authSignupButton) authSignupButton.disabled = isBusy;
+  if (appSignoutButton) appSignoutButton.disabled = isBusy;
+  const submitButton = authForm?.querySelector('button[type="submit"]');
+  if (submitButton) submitButton.disabled = isBusy;
 }
 
 function setDefaultProfileInputs() {
@@ -1201,21 +1204,27 @@ function updateAuthUi(session) {
 
   document.body.classList.toggle("signed-out", !isSignedIn);
   document.body.classList.toggle("signed-in", isSignedIn);
-  appContent.hidden = !isSignedIn;
-  authShell.hidden = isSignedIn;
-  authForm.hidden = false;
-  appSignoutButton.hidden = !isSignedIn;
+  if (appContent) appContent.hidden = !isSignedIn;
+  if (authShell) authShell.hidden = true;
+  if (authForm) authForm.hidden = true;
+  if (appSignoutButton) appSignoutButton.hidden = !isSignedIn;
 
   if (isSignedIn) {
     setAuthStatus(`Signed in as ${currentUser.email}.`);
   } else {
-    setAuthStatus("Sign in or create an account to access your GlobalAdmit workspace.");
+    window.location.replace("login.html");
+    return;
   }
 
   updateOverviewMetrics();
 }
 
 async function handleAuthSubmit(mode) {
+  if (!authEmailInput || !authPasswordInput) {
+    window.location.replace("login.html");
+    return;
+  }
+
   if (isAuthBusy) {
     return;
   }
@@ -1279,9 +1288,9 @@ async function handleSignOut() {
     return;
   }
 
-  authForm.reset();
+  if (authForm) authForm.reset();
   resetAppState();
-  updateAuthUi(null);
+  window.location.replace("login.html");
 }
 
 async function initializeAuth() {
@@ -1291,28 +1300,34 @@ async function initializeAuth() {
 
   if (error) {
     setAuthStatus(error.message, true);
-    updateAuthUi(null);
+    window.location.replace("login.html");
+    return;
+  }
+
+  if (!data.session) {
+    window.location.replace("login.html");
     return;
   }
 
   updateAuthUi(data.session);
-  if (data.session) {
+  const universitiesLoaded = await loadUniversities();
+  if (!universitiesLoaded) {
+    return;
+  }
+  await loadUserData();
+
+  supabase.auth.onAuthStateChange(async (_event, session) => {
+    if (!session) {
+      window.location.replace("login.html");
+      return;
+    }
+
+    updateAuthUi(session);
     const universitiesLoaded = await loadUniversities();
     if (!universitiesLoaded) {
       return;
     }
     await loadUserData();
-  }
-
-  supabase.auth.onAuthStateChange(async (_event, session) => {
-    updateAuthUi(session);
-    if (session) {
-      const universitiesLoaded = await loadUniversities();
-      if (!universitiesLoaded) {
-        return;
-      }
-      await loadUserData();
-    }
   });
 }
 
@@ -2617,16 +2632,20 @@ function populateTaskForm(task) {
 }
 
 
-authForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  authMode = "signin";
-  await handleAuthSubmit(authMode);
-});
+if (authForm) {
+  authForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    authMode = "signin";
+    await handleAuthSubmit(authMode);
+  });
+}
 
-authSignupButton.addEventListener("click", async () => {
-  authMode = "signup";
-  await handleAuthSubmit(authMode);
-});
+if (authSignupButton) {
+  authSignupButton.addEventListener("click", async () => {
+    authMode = "signup";
+    await handleAuthSubmit(authMode);
+  });
+}
 
 appSignoutButton.addEventListener("click", handleSignOut);
 
