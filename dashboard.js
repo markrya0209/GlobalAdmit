@@ -88,7 +88,8 @@ function normalizeUniversityRecord(record) {
     ea_deadline: formatDbDateForPlanner(record.ea_deadline),
     ed_deadline: formatDbDateForPlanner(record.ed_deadline),
     rd_deadline: formatDbDateForPlanner(record.rd_deadline),
-    allows_test_optional: record.test_optional !== false
+    allows_test_optional: record.test_optional !== false,
+    uses_personal_statement: record.uses_personal_statement === true
   };
 }
 
@@ -2512,16 +2513,20 @@ function getSupplementalTaskPriority(applicationName) {
 function syncApplicationTasks() {
   const selectedApplications = getAppliedSchoolSelections();
   const desiredKeys = new Set();
+  const personalStatementApplications = selectedApplications.filter((application) => {
+    const university = getMappedScoringUniversity(application.name);
+    return university?.uses_personal_statement === true;
+  });
 
-  if (selectedApplications.length > 0) {
-    const earliestApplication = selectedApplications.reduce((earliest, current) => {
+  if (personalStatementApplications.length > 0) {
+    const earliestApplication = personalStatementApplications.reduce((earliest, current) => {
       return parsePlannerDeadline(current.deadline) < parsePlannerDeadline(earliest.deadline) ? current : earliest;
     });
 
     desiredKeys.add("essay:personal-statement");
     upsertGeneratedTask({
       sourceKey: "essay:personal-statement",
-      title: "Write Personal Statement",
+      title: "Common App Essay / Personal Statement",
       type: "Essay",
       date: toInputDate(earliestApplication.deadline),
       priority: 9,
