@@ -4,8 +4,249 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GlobalAdmit | Log In</title>
-    <link rel="stylesheet" href="style.css" />
     <script type="module" src="./login.js"></script>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #05070d;
+        color: #e8ecf3;
+        font-family: "Times New Roman", Times, serif;
+      }
+      body {
+        min-height: 100vh;
+        background:
+          radial-gradient(ellipse at 20% 0%, rgba(56, 120, 255, 0.18), transparent 60%),
+          radial-gradient(ellipse at 90% 100%, rgba(120, 80, 220, 0.14), transparent 60%),
+          #05070d;
+      }
+      .public-shell {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 28px 32px 80px;
+      }
+      .public-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 0 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .public-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+        color: #f3f5fa;
+        font-size: 1.15rem;
+        letter-spacing: 0.02em;
+      }
+      .public-brand-mark {
+        display: inline-grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.04);
+        font-size: 0.95rem;
+        letter-spacing: 0.05em;
+      }
+      .public-nav { display: flex; gap: 28px; }
+      .public-nav-link {
+        color: #c4cad6;
+        text-decoration: none;
+        font-size: 1rem;
+        padding: 6px 2px;
+        border-bottom: 1px solid transparent;
+        transition: color 160ms ease, border-color 160ms ease;
+      }
+      .public-nav-link:hover { color: #ffffff; }
+      .public-nav-link.is-active {
+        color: #ffffff;
+        border-bottom-color: rgba(255, 255, 255, 0.6);
+      }
+
+      .eyebrow {
+        display: inline-block;
+        font-size: 0.85rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #8aa3d0;
+        margin-bottom: 14px;
+      }
+      .subtitle, .helper-text {
+        color: #b8c1d3;
+        line-height: 1.65;
+        font-size: 1.05rem;
+        margin: 0;
+      }
+
+      .login-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 48px;
+        margin-top: 64px;
+        align-items: start;
+      }
+      .login-context h1 {
+        font-size: clamp(1.8rem, 3vw, 2.6rem);
+        line-height: 1.25;
+        font-weight: 400;
+        margin: 0 0 18px;
+        color: #f4f6fb;
+      }
+
+      .login-page-card {
+        padding: 36px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(12, 16, 26, 0.65);
+        backdrop-filter: blur(6px);
+      }
+
+      .auth-shell-top { margin-bottom: 18px; }
+      .auth-status {
+        font-size: 0.95rem;
+        color: #93a3c2;
+      }
+
+      .auth-toggle {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+        padding: 4px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.03);
+        margin-bottom: 22px;
+      }
+      .auth-toggle-button {
+        appearance: none;
+        background: transparent;
+        border: 0;
+        padding: 10px 14px;
+        border-radius: 999px;
+        color: #b8c1d3;
+        font-family: inherit;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background 160ms ease, color 160ms ease;
+      }
+      .auth-toggle-button.is-active {
+        background: rgba(255, 255, 255, 0.92);
+        color: #05070d;
+      }
+      .auth-toggle-button:not(.is-active):hover { color: #ffffff; }
+
+      .auth-form { display: flex; flex-direction: column; gap: 16px; }
+      .field { display: flex; flex-direction: column; gap: 6px; }
+      .field span {
+        font-size: 0.85rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #8aa3d0;
+      }
+      .field input {
+        appearance: none;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        color: #f3f5fa;
+        padding: 12px 14px;
+        font-size: 1.05rem;
+        font-family: inherit;
+        transition: border-color 160ms ease, background 160ms ease;
+      }
+      .field input::placeholder { color: #6c7891; }
+      .field input:focus {
+        outline: none;
+        border-color: rgba(140, 200, 255, 0.55);
+        background: rgba(255, 255, 255, 0.07);
+      }
+
+      .login-helper-text {
+        font-size: 0.95rem;
+        color: #93a3c2;
+        margin: 0;
+      }
+
+      .signup-consent {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        font-size: 0.95rem;
+        color: #b8c1d3;
+      }
+      .signup-consent a { color: #9dc7ff; text-decoration: underline; }
+      .signup-consent a:hover { color: #c8e1ff; }
+
+      .auth-actions { display: flex; }
+      .auth-actions-stacked button {
+        width: 100%;
+        appearance: none;
+        background: #ffffff;
+        color: #05070d;
+        border: 1px solid #ffffff;
+        font-family: inherit;
+        font-size: 1.05rem;
+        padding: 12px 18px;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: transform 160ms ease, background 160ms ease;
+      }
+      .auth-actions-stacked button:hover { transform: translateY(-1px); }
+
+      .login-divider {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 12px;
+        margin: 22px 0;
+        color: #6c7891;
+        font-size: 0.95rem;
+      }
+      .login-divider span {
+        display: block;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .login-divider p { margin: 0; letter-spacing: 0.12em; }
+
+      .google-auth-button {
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        appearance: none;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: #f3f5fa;
+        font-family: inherit;
+        font-size: 1rem;
+        padding: 11px 18px;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: background 160ms ease;
+      }
+      .google-auth-button:hover { background: rgba(255, 255, 255, 0.1); }
+      .google-auth-button img {
+        width: 18px;
+        height: 18px;
+        background: #ffffff;
+        border-radius: 50%;
+        padding: 2px;
+      }
+
+      @media (max-width: 880px) {
+        .login-layout { grid-template-columns: 1fr; gap: 28px; margin-top: 36px; }
+        .public-nav { gap: 18px; }
+        .public-shell { padding: 20px 18px 60px; }
+        .login-page-card { padding: 26px; }
+      }
+    </style>
   </head>
   <body class="public-body">
     <main class="public-shell">
@@ -103,7 +344,7 @@
           </div>
 
           <button id="google-auth-button" class="google-auth-button" type="button">
-            <img src="./google-logo-placeholder.svg" alt="" />
+            <img src="./assets/google-logo.svg" alt="" />
             <span>Continue with Google</span>
           </button>
         </section>
